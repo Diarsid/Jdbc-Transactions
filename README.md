@@ -5,6 +5,11 @@ Simple API to streamline SQL operations through plain bare JDBC.
 
 Simple SELECT query:
 ```java
+import diarsid.jdbc.transactions.JdbcTransaction;
+import diarsid.jdbc.transactions.PerRowOperation;
+import diarsid.jdbc.transactions.core.JdbcTransactionFactory;
+import diarsid.jdbc.transactions.exceptions.TransactionHandledException;
+...
     try {
         JdbcTransaction transaction = factory.createTransaction();
         transaction.doQuery(
@@ -64,6 +69,10 @@ Simple update query (INSERT, DELETE, UPDATE)
 Batch update queries:
 
 ```java
+import ...
+import diarsid.jdbc.transactions.core.Params;
+import static diarsid.jdbc.transactions.core.Params.params;
+...
     try {
         JdbcTransaction transaction = factory.createTransaction();
 
