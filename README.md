@@ -47,3 +47,46 @@ Simple SELECT query with wildcards:
         // ... 
     }  
 ```    
+Simple update query (INSERT, DELETE, UPDATE)
+
+```java
+    try {
+        JdbcTransaction transaction = factory.createTransaction();
+        transaction.doUpdate(
+                "INSERT INTO table (col_1, col_2, col_3) " +
+                "VALUES ( ?, ?, ? )", 
+                "value_1", true, 42);  // <- wildcard (?) parameters
+        transaction.commit();
+    } catch (TransactionHandledException e) {
+        // ... 
+    }    
+```
+Batch update queries:
+
+```java
+    try {
+        JdbcTransaction transaction = factory.createTransaction();
+
+        // 1-st way
+        transaction.doBatchUpdate(
+                "INSERT INTO table (col_1, col_2, col_3) " +
+                "VALUES ( ?, ?, ? )", 
+                params("value_1", true, 42),
+                params("value_2", false, 72),
+                params("value_3", true, 56),
+                params("value_4", true, 32),
+                params("value_5", false, 78),
+                params("value_7", true, 26));  
+
+        // 2-nd way
+        Set<Params> params = youToGetParamsFrom(yourBusinessEntities());
+        transaction.doBatchUpdate(
+                "INSERT INTO table (col_1, col_2, col_3) " +
+                "VALUES ( ?, ?, ? )", 
+                params);
+
+        transaction.commit();
+    } catch (TransactionHandledException e) {
+        // ... 
+    }  
+```
