@@ -10,6 +10,7 @@ import java.util.Set;
 
 import diarsid.jdbc.transactions.core.Params;
 import diarsid.jdbc.transactions.exceptions.TransactionHandledSQLException;
+import diarsid.jdbc.transactions.exceptions.TransactionTerminationException;
 
 /**
  *
@@ -45,7 +46,9 @@ public interface JdbcTransaction {
             
     void commit() throws TransactionHandledSQLException;
     
-    void rollback();
+    void rollbackAndTerminate() throws TransactionTerminationException;
+    
+    void rollbackAndProceed();
     
     String getSqlHistory();
 }

@@ -150,7 +150,7 @@ public class JdbcTransactionTest {
     }
 
     /**
-     * Test of rollback method, of class JdbcTransactionWrapper.
+     * Test of rollbackAndTerminate method, of class JdbcTransactionWrapper.
      */
     @Test
     public void testRollback() throws Exception {
@@ -165,7 +165,7 @@ public class JdbcTransactionTest {
         
         assertEquals(1, update);
         
-        transaction.rollback();
+        transaction.rollbackAndTerminate();
         
         int qtyAfter = TEST_BASE.countRowsInTable("table_1");
         assertEquals(3, qtyAfter);
@@ -180,10 +180,10 @@ public class JdbcTransactionTest {
         transaction.doQuery("SELECT * FROM table_1", (row) -> {
             logger.info(
                     format("id: %d, label: %s, index: %d, active: %s", 
-                           (Integer)row.get("id"),
-                           (String)row.get("label"),
-                           (Integer)row.get("index"),
-                           (Boolean)row.get("active")));
+                           (int) row.get("id"),
+                           (String) row.get("label"),
+                           (int) row.get("index"),
+                           (boolean) row.get("active")));
         });
         transaction.commit();
     }
@@ -193,6 +193,19 @@ public class JdbcTransactionTest {
      */
     @Test
     public void testDoQuery_3args_2() throws Exception {
+        JdbcTransaction transaction = createTransaction();
+        transaction.doQuery(
+                "SELECT * FROM table_1 WHERE label LIKE ? ", 
+                (row) -> {
+                    logger.info(
+                            format("id: %d, label: %s, index: %d, active: %s", 
+                                   (int) row.get("id"),
+                                   (String) row.get("label"),
+                                   (int) row.get("index"),
+                                   (boolean) row.get("active")));
+                },
+                "ame_1");
+        transaction.commit();
     }
 
     /**

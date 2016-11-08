@@ -28,7 +28,11 @@ class JdbcTransactionSqlHistoryRecorder {
     private int counter;
     
     JdbcTransactionSqlHistoryRecorder() {
-        this.stringBuilder = new StringBuilder();        
+        this.stringBuilder = new StringBuilder();    
+        this.init();
+    }
+    
+    private void init() {
         this.counter = 0;
         this.stringBuilder
                 .append(LINE_SEPARATOR)
@@ -88,6 +92,11 @@ class JdbcTransactionSqlHistoryRecorder {
                 .replaceAll("(from|FROM)", LINE_SEPARATOR + "FROM")
                 .replaceAll("(group by|GROUP BY)", LINE_SEPARATOR + "GROUP BY")
                 .replaceAll("(values|VALUES)", LINE_SEPARATOR + "VALUES");
+    }
+    
+    void rollback() {
+        this.clear();
+        this.init();        
     }
     
     void clear() {

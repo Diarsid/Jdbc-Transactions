@@ -13,7 +13,7 @@ import java.sql.SQLException;
  * 
  * @author Diarsid
  */
-public class TransactionHandledSQLException extends Exception {
+public class TransactionHandledSQLException extends TransactionHandledException{
 
     /**
      * Wrap underlying SQLException that has occurred during an execution
@@ -22,7 +22,7 @@ public class TransactionHandledSQLException extends Exception {
      * @param e     SQLException that has occurred during a JdbcTransaction
      *              execution.
      */
-    public TransactionHandledSQLException(SQLException e) {
+    public TransactionHandledSQLException(Exception e) {
         super(e);
     }
     

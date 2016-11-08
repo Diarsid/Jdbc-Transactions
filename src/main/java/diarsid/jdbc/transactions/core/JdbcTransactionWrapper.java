@@ -20,12 +20,13 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import diarsid.jdbc.transactions.exceptions.JdbcFailureException;
-import diarsid.jdbc.transactions.exceptions.JdbcPreparedStatementParamsException;
-import diarsid.jdbc.transactions.exceptions.TransactionHandledSQLException;
 import diarsid.jdbc.transactions.JdbcTransaction;
 import diarsid.jdbc.transactions.PerRowOperation;
 import diarsid.jdbc.transactions.Row;
+import diarsid.jdbc.transactions.exceptions.JdbcFailureException;
+import diarsid.jdbc.transactions.exceptions.JdbcPreparedStatementParamsException;
+import diarsid.jdbc.transactions.exceptions.TransactionHandledSQLException;
+import diarsid.jdbc.transactions.exceptions.TransactionTerminationException;
 
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -113,7 +114,7 @@ class JdbcTransactionWrapper implements JdbcTransaction {
         }
     }
     
-    private void rollbackAfterException() {
+    private void rollbackAndFinishAfterException() {
         this.rollbackTransaction();
         this.restoreAutoCommit();
         this.closeConnectionAnyway();  
@@ -122,11 +123,18 @@ class JdbcTransactionWrapper implements JdbcTransaction {
     }
     
     @Override
-    public void rollback() {
+    public void rollbackAndTerminate() throws TransactionTerminationException {
         this.rollbackTransaction();
         this.restoreAutoCommit();
         this.closeConnectionAnyway();        
         this.sqlHistory.clear();
+        throw new TransactionTerminationException("transaction has been terminated normally.");
+    }
+    
+    @Override
+    public void rollbackAndProceed() {
+        this.rollbackTransaction();
+        this.sqlHistory.rollback();
     }
     
     @Override
@@ -147,7 +155,7 @@ class JdbcTransactionWrapper implements JdbcTransaction {
             logger.error(sql);
             logger.error("...with params: " + this.concatenateParams(params));
             logger.error("", ex);
-            this.rollbackAfterException();
+            this.rollbackAndFinishAfterException();
             throw new TransactionHandledSQLException(ex);
         }
     }
@@ -187,7 +195,7 @@ class JdbcTransactionWrapper implements JdbcTransaction {
             logger.error("Exception occured during query: ");
             logger.error(sql);
             logger.error("", ex);
-            this.rollbackAfterException();
+            this.rollbackAndFinishAfterException();
             throw new TransactionHandledSQLException(ex);
         }
     }
@@ -205,7 +213,7 @@ class JdbcTransactionWrapper implements JdbcTransaction {
             logger.error("Exception occured during update: ");
             logger.error(updateSql);
             logger.error("", ex);
-            this.rollbackAfterException();
+            this.rollbackAndFinishAfterException();
             throw new TransactionHandledSQLException(ex);
         }
     }
@@ -225,7 +233,7 @@ class JdbcTransactionWrapper implements JdbcTransaction {
             logger.error(updateSql);
             logger.error("...with params: " + this.concatenateParams(params));
             logger.error("", ex);
-            this.rollbackAfterException();
+            this.rollbackAndFinishAfterException();
             throw new TransactionHandledSQLException(ex);
         }
     }
@@ -264,7 +272,7 @@ class JdbcTransactionWrapper implements JdbcTransaction {
                 logger.error(this.concatenateParams(params.get()));
             }
             logger.error("", ex);
-            this.rollbackAfterException();
+            this.rollbackAndFinishAfterException();
             throw new TransactionHandledSQLException(ex);
         }
     }
@@ -404,7 +412,7 @@ class JdbcTransactionWrapper implements JdbcTransaction {
                 logger.error(format(
                         "Exception occured during Row processing with column: %s: ", columnLabel));
                 logger.error("", ex);
-                this.rollbackAfterException();
+                this.rollbackAndFinishAfterException();
                 throw new TransactionHandledSQLException(ex);
             }
         };
@@ -424,7 +432,7 @@ class JdbcTransactionWrapper implements JdbcTransaction {
             } catch (SQLException rollbackException) {
                 logger.error("Exception occured during rollback of connection failed to commit: ");
                 logger.error("", rollbackException);
-                // No actions after rollback has failed.
+                // No actions after rollbackAndTerminate has failed.
                 // Go to finally block and finish transaction.
             }
         } finally {
