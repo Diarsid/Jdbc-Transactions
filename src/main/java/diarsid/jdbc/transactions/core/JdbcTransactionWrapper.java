@@ -1,0 +1,441 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+
+package diarsid.jdbc.transactions.core;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ScheduledFuture;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import diarsid.jdbc.transactions.exceptions.JdbcFailureException;
+import diarsid.jdbc.transactions.exceptions.JdbcPreparedStatementParamsException;
+import diarsid.jdbc.transactions.exceptions.TransactionHandledSQLException;
+import diarsid.jdbc.transactions.JdbcTransaction;
+import diarsid.jdbc.transactions.PerRowOperation;
+import diarsid.jdbc.transactions.Row;
+
+import static java.lang.String.format;
+import static java.util.Arrays.asList;
+import static java.util.Arrays.stream;
+
+
+class JdbcTransactionWrapper implements JdbcTransaction {
+    
+    private static final Logger logger = LoggerFactory.getLogger(JdbcTransactionWrapper.class);
+    
+    private final Connection connection;
+    private final ScheduledFuture delayedTearDown;
+    private final JdbcPreparedStatementSetter paramsSetter;
+    private final JdbcTransactionSqlHistoryRecorder sqlHistory;
+    
+    JdbcTransactionWrapper(
+            Connection connection, 
+            ScheduledFuture delayedTearDown, 
+            JdbcPreparedStatementSetter argsSetter,
+            JdbcTransactionSqlHistoryRecorder sqlHistory) {
+        this.connection = connection;
+        this.delayedTearDown = delayedTearDown;
+        this.paramsSetter = argsSetter;
+        this.sqlHistory = sqlHistory;
+    }
+    
+//    private void closeResults() {
+//        for (ResultSQL sqlResult : this.results) {
+//            try {
+//                sqlResult.getAssociatedResultSet().close();
+//            } catch (SQLException ex) {
+//                logger.warn("cannot close ResultSet.");
+//                // have no idea what to do if ResultSet is
+//                // impossible to close.
+//                // Just continue closing other ResultSets.
+//            }
+//        }
+//        this.results.clear();
+//    }
+    
+//    private void closePreparedSqls() {
+//        for (SQLQuery sql : this.preparedSqls) {
+//            try {
+//                sql.getAssociatedStatement().close();
+//            } catch (SQLException e) {
+//                logger.warn("cannot close PreparedStatement:");
+//                logger.warn(sql.getStatementString());
+//                // have no idea what to do if Statement is
+//                // impossible to close.
+//                // Just continue closing other Statements.
+//            }
+//        }
+//        this.preparedSqls.clear();
+//    }
+    
+    private void restoreAutoCommit() {
+        try {
+            this.connection.setAutoCommit(true);
+        } catch (SQLException e) {
+            logger.warn("cannot restore connection autocommit mode: ", e);
+            // no actions, just proceed and try to close
+            // connection.
+        }
+    }
+    
+    private void rollbackTransaction() {
+        try {
+            this.connection.rollback();
+        } catch (SQLException ex) {
+            logger.warn("cannot rollback connection: ", ex);
+            // no actions, just proceed and try to close
+            // connection.
+        }
+    }
+    
+    private void closeConnectionAnyway() {
+        try {
+            this.connection.close();
+            this.delayedTearDown.cancel(true);
+        } catch (SQLException e) {
+            logger.error("cannot close connection: ", e);
+            throw new JdbcFailureException(
+                    "It is impossible to close the database connection. " +
+                    "Program will be closed");
+        }
+    }
+    
+    private void rollbackAfterException() {
+        this.rollbackTransaction();
+        this.restoreAutoCommit();
+        this.closeConnectionAnyway();  
+        this.logger.error(this.sqlHistory.getHistory());
+        this.sqlHistory.clear();
+    }
+    
+    @Override
+    public void rollback() {
+        this.rollbackTransaction();
+        this.restoreAutoCommit();
+        this.closeConnectionAnyway();        
+        this.sqlHistory.clear();
+    }
+    
+    @Override
+    public void doQuery(String sql, PerRowOperation operation, Object... params) 
+            throws TransactionHandledSQLException {
+        try {
+            PreparedStatement ps = this.connection.prepareStatement(sql);
+            this.paramsSetter.setParameters(ps, params);
+            ResultSet rs = ps.executeQuery();
+            Row row = this.wrapResultSetIntoRow(rs);
+            while ( rs.next() ) {
+                operation.process(row);
+            }
+            ps.close();
+            rs.close();
+        } catch (SQLException ex) {
+            logger.error("Exception occured during query: ");
+            logger.error(sql);
+            logger.error("...with params: " + this.concatenateParams(params));
+            logger.error("", ex);
+            this.rollbackAfterException();
+            throw new TransactionHandledSQLException(ex);
+        }
+    }
+    
+    private String concatenateParams(Object[] params) {
+        return stream(params)
+                .map(Object::toString)
+                .collect(Collectors.joining(", "));
+    }
+    
+    @Override
+    public void doQuery(String sql, PerRowOperation operation, Params params) 
+            throws TransactionHandledSQLException {
+        this.doQuery(sql, operation, params.get());
+    }
+    
+    @Override
+    public void doQuery(String sql, PerRowOperation operation, List<Object> params) 
+            throws TransactionHandledSQLException {
+        this.doQuery(sql, operation, params.toArray());
+    }
+    
+    @Override
+    public void doQuery(String sql, PerRowOperation operation) 
+            throws TransactionHandledSQLException {
+        this.sqlHistory.add(sql);
+        try {
+            PreparedStatement ps = this.connection.prepareStatement(sql);
+            ResultSet rs = ps.executeQuery();
+            Row row = this.wrapResultSetIntoRow(rs);
+            while ( rs.next() ) {
+                operation.process(row);
+            }
+            ps.close();
+            rs.close();
+        } catch (SQLException ex) {
+            logger.error("Exception occured during query: ");
+            logger.error(sql);
+            logger.error("", ex);
+            this.rollbackAfterException();
+            throw new TransactionHandledSQLException(ex);
+        }
+    }
+    
+    @Override
+    public int doUpdate(String updateSql) 
+            throws TransactionHandledSQLException {
+        this.sqlHistory.add(updateSql);
+        try {
+            Statement ps = this.connection.createStatement();
+            int x = ps.executeUpdate(updateSql);
+            ps.close();
+            return x;
+        } catch (SQLException ex) {
+            logger.error("Exception occured during update: ");
+            logger.error(updateSql);
+            logger.error("", ex);
+            this.rollbackAfterException();
+            throw new TransactionHandledSQLException(ex);
+        }
+    }
+    
+    @Override
+    public int doUpdate(String updateSql, Object... params) 
+            throws TransactionHandledSQLException {
+        this.sqlHistory.add(updateSql, params);
+        try {
+            PreparedStatement ps = this.connection.prepareStatement(updateSql);
+            this.paramsSetter.setParameters(ps, params);
+            int x = ps.executeUpdate();
+            ps.close();
+            return x;
+        } catch (SQLException ex) {
+            logger.error("Exception occured during update: ");
+            logger.error(updateSql);
+            logger.error("...with params: " + this.concatenateParams(params));
+            logger.error("", ex);
+            this.rollbackAfterException();
+            throw new TransactionHandledSQLException(ex);
+        }
+    }
+    
+    @Override
+    public int doUpdate(String updateSql, Params params) throws TransactionHandledSQLException {
+        return this.doUpdate(updateSql, params.get());
+    }
+    
+    @Override
+    public int doUpdate(String updateSql, List<Object> params) 
+            throws TransactionHandledSQLException {
+        return this.doUpdate(updateSql, params.toArray());
+    }
+    
+    @Override
+    public int[] doBatchUpdate(String updateSql, Set<Params> batchParams) 
+            throws TransactionHandledSQLException {
+        this.nonEmptyParamsOnly(batchParams, updateSql);
+        this.paramsMustHaveEqualQty(batchParams, updateSql);
+        this.sqlHistory.add(updateSql, batchParams);
+        try {
+            PreparedStatement ps = this.connection.prepareStatement(updateSql);
+            for (Params params : batchParams) {
+                this.paramsSetter.setParameters(ps, params.get());
+                ps.addBatch();
+            }           
+            int[] x = ps.executeBatch();
+            ps.close();
+            return x;
+        } catch (SQLException ex) {
+            logger.error("Exception occured during batch update: ");
+            logger.error(updateSql);
+            logger.error("...with params: ");
+            for (Params params : batchParams) {
+                logger.error(this.concatenateParams(params.get()));
+            }
+            logger.error("", ex);
+            this.rollbackAfterException();
+            throw new TransactionHandledSQLException(ex);
+        }
+    }
+
+    private void paramsMustHaveEqualQty(Set<Params> batchParams, String updateSql) {
+        int paramsQty = batchParams.iterator().next().qty();
+        batchParams
+                .stream()
+                .filter(params -> params.qty() != paramsQty)
+                .findFirst()
+                .ifPresent(params -> {this.paramsQtyAreDifferent(updateSql);});
+    }
+    
+    private void paramsQtyAreDifferent(String sql) {
+        throw new JdbcPreparedStatementParamsException(
+                format("PreparedStatement parameters qty differs for SQL: %s", sql));
+    }
+
+    private void nonEmptyParamsOnly(Set<Params> batchParams, String updateSql) {
+        if ( batchParams.isEmpty() ) {
+            throw new JdbcPreparedStatementParamsException(
+                    format("PreparedStatement parameters are empty in SQL: %s", updateSql));
+        }
+    }
+    
+    @Override
+    public int[] doBatchUpdate(String updateSql, Params... batchParams) 
+            throws TransactionHandledSQLException {
+        return this.doBatchUpdate(updateSql, new HashSet<>(asList(batchParams)));
+    }
+
+//    @Override
+//    public SQLQuery createQuery(String sql) throws TransactionHandledSQLException {
+//        try {
+//            PreparedStatement ps = this.connection.prepareStatement(sql);
+//            SQLQuery sqlToken = new SQLQuery(ps, sql, this.random.nextInt());
+//            this.preparedSqls.add(sqlToken);
+//            return sqlToken;
+//        } catch (SQLException ex) {
+//            logger.error("Exception occured during PreparedStatement creation for: ");
+//            logger.error(sql);
+//            logger.error("", ex);
+//            this.rollbackAndFinishTransaction();
+//            throw new TransactionHandledSQLException(ex);
+//        }
+//    }
+//
+//    @Override
+//    public void setArgs(SQLQuery sql, Object... args) throws TransactionHandledSQLException  {
+//        this.proceedOnlyIfQueryArgumentsNotSet(sql);
+//        try {            
+//            this.paramsSetter.setParameters(sql.getAssociatedStatement(), args);
+//            sql.addArgumentsToSqlString(args);
+//        } catch (SQLException ex) {
+//            logger.error("Exception occured during PreparedStatement arguments insertion: ");
+//            logger.error(sql.getStatementString());
+//            logger.error("", ex);
+//            this.rollbackAndFinishTransaction();
+//            throw new TransactionHandledSQLException(ex);
+//        }
+//    }
+//
+//    private void proceedOnlyIfQueryArgumentsNotSet(SQLQuery sql) 
+//            throws QueryArgumentsAlreadySetException {
+//        if ( sql.isArgumentsSet() ) {
+//            throw new QueryArgumentsAlreadySetException(sql.getStatementString());
+//        }
+//    }
+//
+//    @Override
+//    public ResultSQL doQuery(SQLQuery sql) throws TransactionHandledSQLException {
+//        try {
+//            ResultSet rs = sql.getAssociatedStatement().executeQuery();
+//            ResultSQL result = new ResultSQL(rs, sql.getStatementString());
+//            this.results.add(result);
+//            return result;
+//        } catch (SQLException ex) {
+//            logger.error("Exception occured during query execution: ");
+//            logger.error(sql.getStatementString());
+//            logger.error("", ex);
+//            this.rollbackAndFinishTransaction();
+//            throw new TransactionHandledSQLException(ex);
+//        }
+//    }
+//    
+//    @Override
+//    public void doQuery(SQLQuery sql, PerRowOperation operation) 
+//            throws TransactionHandledSQLException {
+//        try {
+//            PreparedStatement ps = sql.getAssociatedStatement();
+//            ResultSet rs = ps.executeQuery();
+//            Row row = this.wrapResultSetIntoRow(rs);
+//            while ( rs.next() ) {
+//                operation.process(row);
+//            }
+//            rs.close();
+//        } catch (SQLException ex) {
+//            logger.error("Exception occured during result processing: ");
+//            logger.error(sql.getStatementString());
+//            logger.error("", ex);
+//            this.rollbackAndFinishTransaction();
+//            throw new TransactionHandledSQLException(ex);
+//        }
+//    }
+//    
+//    public void process(ResultSQL result, PerRowOperation operation) 
+//            throws TransactionHandledSQLException {
+//        this.proceedOnlyIfUnprocessedYet(result);
+//        try {
+//            ResultSet rs = result.getAssociatedResultSet();
+//            Row row = this.wrapResultSetIntoRow(rs);
+//            while ( rs.next() ) {
+//                operation.process(row);
+//            }
+//            result.setProcessed();
+//        } catch (SQLException ex) {
+//            logger.error("Exception occured during result processing: ");
+//            logger.error(result.getInitialSQL());
+//            logger.error("", ex);
+//            this.rollbackAndFinishTransaction();
+//            throw new TransactionHandledSQLException(ex);
+//        }
+//    }
+//
+//    private void proceedOnlyIfUnprocessedYet(ResultSQL result) 
+//            throws AlreadyProcessedResultException {
+//        if ( result.isProcessed() ) {
+//            throw new AlreadyProcessedResultException(result.getInitialSQL());
+//        }
+//    }
+
+    private Row wrapResultSetIntoRow(ResultSet rs) {
+        Row row = (columnLabel) -> {
+            try {
+                return rs.getObject(columnLabel);
+            } catch (SQLException ex) {
+                logger.error(format(
+                        "Exception occured during Row processing with column: %s: ", columnLabel));
+                logger.error("", ex);
+                this.rollbackAfterException();
+                throw new TransactionHandledSQLException(ex);
+            }
+        };
+        return row;
+    }
+
+    @Override
+    public void commit() {
+        try {
+            this.connection.commit();
+        } catch (SQLException commitException) {
+            logger.error("Exception occured during commiting: ");
+            logger.error("", commitException);
+            try {
+                this.connection.rollback();
+                logger.error("transaction has been rolled back.");
+            } catch (SQLException rollbackException) {
+                logger.error("Exception occured during rollback of connection failed to commit: ");
+                logger.error("", rollbackException);
+                // No actions after rollback has failed.
+                // Go to finally block and finish transaction.
+            }
+        } finally {
+            this.restoreAutoCommit();
+            this.closeConnectionAnyway();
+            this.sqlHistory.clear();
+        }        
+    }
+    
+    @Override
+    public String getSqlHistory() {
+        return this.sqlHistory.getHistory();
+    }
+}
