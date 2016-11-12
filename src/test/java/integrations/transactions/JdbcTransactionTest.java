@@ -150,6 +150,10 @@ public class JdbcTransactionTest {
     static JdbcTransaction createTransaction() throws TransactionHandledSQLException {
         return TRANSACTION_FACTORY.createTransaction();
     }
+    
+    static JdbcTransaction createDisposableTransaction() throws TransactionHandledSQLException {
+        return TRANSACTION_FACTORY.createDisposableTransaction();
+    }
 
     /**
      * Test of rollbackAndTerminate method, of class JdbcTransactionWrapper.
@@ -176,6 +180,8 @@ public class JdbcTransactionTest {
             assertTrue(true);
         }
         
+        assertTrue(TEST_BASE.ifAllConnectionsReleased());
+        
         int qtyAfter = TEST_BASE.countRowsInTable("table_1");
         assertEquals(3, qtyAfter);
     }
@@ -195,6 +201,8 @@ public class JdbcTransactionTest {
                            (boolean) row.get("active")));
         });
         transaction.commit();
+        
+        assertTrue(TEST_BASE.ifAllConnectionsReleased());
     }
 
     /**
@@ -215,6 +223,8 @@ public class JdbcTransactionTest {
                 },
                 "ame_1");
         transaction.commit();
+        
+        assertTrue(TEST_BASE.ifAllConnectionsReleased());
     }
 
     /**
@@ -252,6 +262,8 @@ public class JdbcTransactionTest {
                 4, "name_4", 40, false);        
         transaction.commit();
         
+        assertTrue(TEST_BASE.ifAllConnectionsReleased());
+        
         int qtyAfter = TEST_BASE.countRowsInTable("table_1");
         assertEquals(4, qtyAfter);
     }
@@ -269,6 +281,8 @@ public class JdbcTransactionTest {
         // transaction has not been committed or rolled back properly.
         // it will be rolled back, restored and closed by JdbcTransactionGuard.
         
+        assertTrue(TEST_BASE.ifAllConnectionsReleased());
+        
         int qtyAfter = TEST_BASE.countRowsInTable("table_1");
         assertEquals(3, qtyAfter);
     }
@@ -276,28 +290,34 @@ public class JdbcTransactionTest {
     /**
      * Test of doUpdate method, of class JdbcTransactionWrapper.
      */
-    @Test(expected = TransactionHandledSQLException.class)
+    @Test()
     public void testDoUpdate_String_Params() throws Exception {
         int qtyBefore = TEST_BASE.countRowsInTable("table_1");
         assertEquals(3, qtyBefore);
         
-        JdbcTransaction transaction = createTransaction();
-        transaction.doBatchUpdate(
-                TABLE_1_INSERT, 
-                params(4, "name_4", 40, false),
-                params(5, "name_5", 50, false),
-                params(6, "name_6", 60, false)); 
-        
-        transaction.doBatchUpdate(
-                TABLE_1_INSERT, 
-                params(7, "name_7", 740, false),
-                params(8, "name_8", 70, false));
-        
-        transaction.doUpdate(
-                TABLE_1_INSERT, 
-                8, "name_7", 70, false); // <- SQLException should rise due to primary key violation
-        
-        fail();        
+        try {
+            JdbcTransaction transaction = createTransaction();
+            transaction.doBatchUpdate(
+                    TABLE_1_INSERT,
+                    params(4, "name_4", 40, false),
+                    params(5, "name_5", 50, false),
+                    params(6, "name_6", 60, false));            
+            
+            transaction.doBatchUpdate(
+                    TABLE_1_INSERT,
+                    params(7, "name_7", 740, false),
+                    params(8, "name_8", 70, false));
+            
+            transaction.doUpdate(
+                    TABLE_1_INSERT,
+                    8, "name_7", 70, false); // <- SQLException should rise due to primary key violation
+            
+            fail();
+        } catch (TransactionHandledSQLException transactionHandledSQLException) {
+            assertTrue(TEST_BASE.ifAllConnectionsReleased());
+            int qtyAfter = TEST_BASE.countRowsInTable("table_1");
+            assertEquals(3, qtyAfter);
+        }
     }
 
     /**
@@ -330,6 +350,8 @@ public class JdbcTransactionTest {
                 params(6, "name_6", 60, false));        
         transaction.commit();
         
+        assertTrue(TEST_BASE.ifAllConnectionsReleased());
+        
         int qtyAfter = TEST_BASE.countRowsInTable("table_1");
         assertEquals(6, qtyAfter);
     }
@@ -359,6 +381,8 @@ public class JdbcTransactionTest {
                 params(4, "name_4", 40, false));
         transaction.commit();
         
+        assertTrue(TEST_BASE.ifAllConnectionsReleased());
+        
         int qtyAfter = TEST_BASE.countRowsInTable("table_1");
         assertEquals(4, qtyAfter);        
     }
@@ -385,8 +409,155 @@ public class JdbcTransactionTest {
                         params(6, "name_6", 60, false));
         transaction.commit();
         
+        assertTrue(TEST_BASE.ifAllConnectionsReleased());
+        
         int qtyAfterTrueCondition = TEST_BASE.countRowsInTable("table_1");
         assertEquals(6, qtyAfterTrueCondition);
+    }
+    
+    @Test
+    public void testConditionals_ifTrue_stacked() throws Exception {
+        int qtyBefore = TEST_BASE.countRowsInTable("table_1");
+        assertEquals(3, qtyBefore);
+        
+        JdbcTransaction transaction = createTransaction();
+                
+        transaction
+                .ifTrue(true)
+                .ifTrue(true)
+                .doBatchUpdate(
+                        TABLE_1_INSERT, 
+                        params(4, "name_4", 40, false),
+                        params(5, "name_5", 50, false),
+                        params(6, "name_6", 60, false));
+        transaction.commit();
+        
+        assertTrue(TEST_BASE.ifAllConnectionsReleased());
+        
+        int qtyAfterTrueCondition = TEST_BASE.countRowsInTable("table_1");
+        assertEquals(6, qtyAfterTrueCondition);
+    }
+    
+    @Test
+    public void testConditionals_ifTrue_stacked_with_false() throws Exception {
+        int qtyBefore = TEST_BASE.countRowsInTable("table_1");
+        assertEquals(3, qtyBefore);
+        
+        JdbcTransaction transaction = createTransaction();
+                
+        transaction
+                .ifTrue(true)
+                .ifTrue(false)
+                .ifTrue(true)
+                .doBatchUpdate(
+                        TABLE_1_INSERT, 
+                        params(4, "name_4", 40, false),
+                        params(5, "name_5", 50, false),
+                        params(6, "name_6", 60, false));
+        transaction.commit();
+        
+        assertTrue(TEST_BASE.ifAllConnectionsReleased());
+        
+        int qtyAfterTrueCondition = TEST_BASE.countRowsInTable("table_1");
+        assertEquals(3, qtyAfterTrueCondition);
+    }
+    
+    
+    @Test
+    public void disposableTransactionTest() throws Exception {
+        int qtyBefore = TEST_BASE.countRowsInTable("table_1");
+        assertEquals(3, qtyBefore);
+        
+        createDisposableTransaction()
+                .doBatchUpdate(
+                        TABLE_1_INSERT, 
+                        params(4, "name_4", 40, false),
+                        params(5, "name_5", 50, false),
+                        params(6, "name_6", 60, false));
+        
+        assertTrue(TEST_BASE.ifAllConnectionsReleased());
+        
+        int qtyAfterTrueCondition = TEST_BASE.countRowsInTable("table_1");
+        assertEquals(6, qtyAfterTrueCondition);
+    }
+    
+    @Test
+    public void disposableConditionalTransactionTest_true() throws Exception {
+        int qtyBefore = TEST_BASE.countRowsInTable("table_1");
+        assertEquals(3, qtyBefore);
+        
+        createDisposableTransaction()
+                .ifTrue( qtyBefore > 0 )
+                .doBatchUpdate(
+                        TABLE_1_INSERT, 
+                        params(4, "name_4", 40, false),
+                        params(5, "name_5", 50, false),
+                        params(6, "name_6", 60, false));
+        
+        assertTrue(TEST_BASE.ifAllConnectionsReleased());
+        
+        int qtyAfterTrueCondition = TEST_BASE.countRowsInTable("table_1");
+        assertEquals(6, qtyAfterTrueCondition);
+    }
+    
+    @Test
+    public void disposableConditionalTransactionTest_ifTrue_stacked_true() throws Exception {
+        int qtyBefore = TEST_BASE.countRowsInTable("table_1");
+        assertEquals(3, qtyBefore);
+        
+        createDisposableTransaction()
+                .ifTrue( qtyBefore > 0 )
+                .ifTrue( true )
+                .doBatchUpdate(
+                        TABLE_1_INSERT, 
+                        params(4, "name_4", 40, false),
+                        params(5, "name_5", 50, false),
+                        params(6, "name_6", 60, false));
+        
+        assertTrue(TEST_BASE.ifAllConnectionsReleased());
+        
+        int qtyAfterTrueCondition = TEST_BASE.countRowsInTable("table_1");
+        assertEquals(6, qtyAfterTrueCondition);
+    }
+    
+    @Test
+    public void disposableConditionalTransactionTest_false() throws Exception {
+        int qtyBefore = TEST_BASE.countRowsInTable("table_1");
+        assertEquals(3, qtyBefore);
+        
+        createDisposableTransaction()
+                .ifTrue( false )
+                .doBatchUpdate(
+                        TABLE_1_INSERT, 
+                        params(4, "name_4", 40, false),
+                        params(5, "name_5", 50, false),
+                        params(6, "name_6", 60, false));
+        
+        assertTrue(TEST_BASE.ifAllConnectionsReleased());
+        
+        int qtyAfterTrueCondition = TEST_BASE.countRowsInTable("table_1");
+        assertEquals(3, qtyAfterTrueCondition);
+    }
+    
+    @Test
+    public void disposableConditionalTransactionTest_ifTrue_stacked_with_false() throws Exception {
+        int qtyBefore = TEST_BASE.countRowsInTable("table_1");
+        assertEquals(3, qtyBefore);
+        
+        createDisposableTransaction()
+                .ifTrue( true )
+                .ifTrue( false )
+                .ifTrue( true )
+                .doBatchUpdate(
+                        TABLE_1_INSERT, 
+                        params(4, "name_4", 40, false),
+                        params(5, "name_5", 50, false),
+                        params(6, "name_6", 60, false));
+        
+        assertTrue(TEST_BASE.ifAllConnectionsReleased());
+        
+        int qtyAfterTrueCondition = TEST_BASE.countRowsInTable("table_1");
+        assertEquals(3, qtyAfterTrueCondition);
     }
 
 }

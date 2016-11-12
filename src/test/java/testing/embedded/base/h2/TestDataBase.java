@@ -19,4 +19,6 @@ public interface TestDataBase {
     void setupRequiredTable(String tableCreationSQLScript);
     
     int countRowsInTable(String tableName);
+    
+    boolean ifAllConnectionsReleased();
 }

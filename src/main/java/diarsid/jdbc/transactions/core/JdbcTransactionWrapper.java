@@ -426,7 +426,11 @@ class JdbcTransactionWrapper implements JdbcTransaction {
     
     @Override
     public JdbcTransaction ifTrue(boolean condition) {
-        return new JdbcTransactionConditionalWrapper(this, condition);
+        if ( condition ) {
+            return this;
+        } else {
+            return new JdbcTransactionStub();
+        }        
     }
     
     @Override

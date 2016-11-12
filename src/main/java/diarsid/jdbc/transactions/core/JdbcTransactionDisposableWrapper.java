@@ -225,7 +225,17 @@ class JdbcTransactionDisposableWrapper implements JdbcTransaction {
 
     @Override
     public JdbcTransaction ifTrue(boolean condition) {
-        return new JdbcTransactionConditionalWrapper(this, condition);
+        if ( condition ) {
+            return this;
+        } else {
+            try {
+                this.commitTransactionAndMarkAsUsed();
+            } catch (TransactionHandledSQLException e) {
+                // Do nothing.
+                // Actual exception has been processed already.
+            }
+            return new JdbcTransactionStub();
+        }
     }
 
     @Override
