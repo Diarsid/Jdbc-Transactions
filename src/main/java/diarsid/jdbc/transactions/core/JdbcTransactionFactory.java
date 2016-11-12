@@ -40,18 +40,30 @@ public class JdbcTransactionFactory {
     
     public JdbcTransaction createTransaction() throws TransactionHandledSQLException {
         try {
-            Connection connection = connectionsSource.getConnection();
-            JdbcTransactionSqlHistoryRecorder sqlHistoryRecorder = 
-                    new JdbcTransactionSqlHistoryRecorder();
-            connection.setAutoCommit(false);
-            ScheduledFuture connectionTearDown = 
-                    this.transactionGuard.accept(connection, sqlHistoryRecorder);
-            return new JdbcTransactionWrapper(
-                    connection, connectionTearDown, this.argsSetter, sqlHistoryRecorder);
+            return this.setNewTransaction();
         } catch (SQLException e) {
             logger.error("SQLException occured during JDBC Connection obtaining: ", e);
             throw new TransactionHandledSQLException(e);
-        }
-        
+        }        
     }
+    
+    public JdbcTransaction createDisposableTransaction() throws TransactionHandledSQLException {
+        try {
+            return new JdbcTransactionDisposableWrapper(this.setNewTransaction());
+        } catch (SQLException e) {
+            logger.error("SQLException occured during JDBC Connection obtaining: ", e);
+            throw new TransactionHandledSQLException(e);
+        }        
+    }
+
+    private JdbcTransaction setNewTransaction() throws SQLException {
+        Connection connection = connectionsSource.getConnection();
+        JdbcTransactionSqlHistoryRecorder sqlHistoryRecorder =
+            new JdbcTransactionSqlHistoryRecorder();
+        connection.setAutoCommit(false);
+        ScheduledFuture connectionTearDown =
+            this.transactionGuard.accept(connection, sqlHistoryRecorder);
+        return new JdbcTransactionWrapper(
+                connection, connectionTearDown, this.argsSetter, sqlHistoryRecorder);
+    }    
 }
