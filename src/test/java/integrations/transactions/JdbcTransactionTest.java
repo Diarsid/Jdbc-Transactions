@@ -27,11 +27,13 @@ import diarsid.jdbc.transactions.core.JdbcPreparedStatementSetter;
 import diarsid.jdbc.transactions.core.JdbcTransactionFactory;
 import diarsid.jdbc.transactions.core.JdbcTransactionGuard;
 import diarsid.jdbc.transactions.exceptions.TransactionHandledSQLException;
+import diarsid.jdbc.transactions.exceptions.TransactionTerminationException;
 
 import static java.lang.String.format;
 import static java.lang.Thread.sleep;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import static diarsid.jdbc.transactions.core.Params.params;
@@ -153,19 +155,26 @@ public class JdbcTransactionTest {
      * Test of rollbackAndTerminate method, of class JdbcTransactionWrapper.
      */
     @Test
-    public void testRollback() throws Exception {
-        int qtyBefore = TEST_BASE.countRowsInTable("table_1");
-        assertEquals(3, qtyBefore);
-        
-        JdbcTransaction transaction = createTransaction();
-        
-        int update = transaction.doUpdate(
-                "DELETE FROM table_1 WHERE label IS ? ", 
+    public void testRollbackAndTerminate() throws Exception {
+        try {
+            int qtyBefore = TEST_BASE.countRowsInTable("table_1");
+            assertEquals(3, qtyBefore);
+            
+            JdbcTransaction transaction = createTransaction();
+            
+            int update = transaction.doUpdate(
+                "DELETE FROM table_1 WHERE label IS ? ",
                 "name_2");
-        
-        assertEquals(1, update);
-        
-        transaction.rollbackAndTerminate();
+            
+            assertEquals(1, update);
+            
+            transaction.rollbackAndTerminate();
+            
+            fail();
+            
+        } catch (TransactionTerminationException transactionTerminationException) {
+            assertTrue(true);
+        }
         
         int qtyAfter = TEST_BASE.countRowsInTable("table_1");
         assertEquals(3, qtyAfter);
@@ -329,7 +338,55 @@ public class JdbcTransactionTest {
      * Test of commit method, of class JdbcTransactionWrapper.
      */
     @Test
-    public void testCommit() {
+    public void testRollbackAndProceed() throws Exception {
+        int qtyBefore = TEST_BASE.countRowsInTable("table_1");
+        assertEquals(3, qtyBefore);
+        
+        JdbcTransaction transaction = createTransaction();
+        transaction.doBatchUpdate(
+                TABLE_1_INSERT, 
+                params(4, "name_4", 40, false),
+                params(5, "name_5", 50, false),
+                params(6, "name_6", 60, false));
+        
+        transaction.rollbackAndProceed();
+        
+        int qtyAfterRollback = TEST_BASE.countRowsInTable("table_1");
+        assertEquals(3, qtyAfterRollback);
+        
+        transaction.doBatchUpdate(
+                TABLE_1_INSERT, 
+                params(4, "name_4", 40, false));
+        transaction.commit();
+        
+        int qtyAfter = TEST_BASE.countRowsInTable("table_1");
+        assertEquals(4, qtyAfter);        
+    }
+    
+    @Test
+    public void testConditionals() throws Exception {
+        int qtyBefore = TEST_BASE.countRowsInTable("table_1");
+        assertEquals(3, qtyBefore);
+        
+        JdbcTransaction transaction = createTransaction();
+        transaction
+                .ifTrue(false)
+                .doBatchUpdate(
+                        TABLE_1_INSERT, 
+                        params(4, "name_4", 40, false),
+                        params(5, "name_5", 50, false));
+                
+        transaction
+                .ifTrue(true)
+                .doBatchUpdate(
+                        TABLE_1_INSERT, 
+                        params(4, "name_4", 40, false),
+                        params(5, "name_5", 50, false),
+                        params(6, "name_6", 60, false));
+        transaction.commit();
+        
+        int qtyAfterTrueCondition = TEST_BASE.countRowsInTable("table_1");
+        assertEquals(6, qtyAfterTrueCondition);
     }
 
 }
