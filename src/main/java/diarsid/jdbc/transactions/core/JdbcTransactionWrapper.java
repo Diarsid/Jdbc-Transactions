@@ -425,6 +425,11 @@ class JdbcTransactionWrapper implements JdbcTransaction {
     }
     
     @Override
+    public JdbcTransaction ifTrue(boolean condition) {
+        return new JdbcTransactionConditionalWrapper(this, condition);
+    }
+    
+    @Override
     public String getSqlHistory() {
         return this.sqlHistory.getHistory();
     }

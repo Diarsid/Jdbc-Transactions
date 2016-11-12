@@ -80,5 +80,7 @@ public interface JdbcTransaction {
     
     void rollbackAndProceed();
     
+    JdbcTransaction ifTrue(boolean condition);
+    
     String getSqlHistory();
 }
