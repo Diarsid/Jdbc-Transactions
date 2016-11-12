@@ -9,7 +9,7 @@ package diarsid.jdbc.transactions.exceptions;
  *
  * @author Diarsid
  */
-public class TransactionTerminationException extends TransactionHandledException {
+public class TransactionTerminationException extends Exception {
 
     /**
      * Creates a new instance of <code>TransactionTerminationException</code> without detail

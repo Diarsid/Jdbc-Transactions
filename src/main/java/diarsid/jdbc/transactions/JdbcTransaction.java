@@ -18,6 +18,30 @@ import diarsid.jdbc.transactions.exceptions.TransactionTerminationException;
  */
 public interface JdbcTransaction {
     
+    boolean doesQueryHaveResults(String sql) 
+            throws TransactionHandledSQLException;
+    
+    boolean doesQueryHaveResults(String sql, Object... params) 
+            throws TransactionHandledSQLException;
+    
+    boolean doesQueryHaveResults(String sql, List<Object> params) 
+            throws TransactionHandledSQLException;
+    
+    boolean doesQueryHaveResults(String sql, Params params) 
+            throws TransactionHandledSQLException;
+    
+    int countQueryResults(String sql) 
+            throws TransactionHandledSQLException;
+    
+    int countQueryResults(String sql, Object... params) 
+            throws TransactionHandledSQLException;
+    
+    int countQueryResults(String sql, List<Object> params) 
+            throws TransactionHandledSQLException;
+    
+    int countQueryResults(String sql, Params params) 
+            throws TransactionHandledSQLException;
+    
     void doQuery(String sql, PerRowOperation operation, Object... params) 
             throws TransactionHandledSQLException;
     
@@ -30,13 +54,17 @@ public interface JdbcTransaction {
     void doQuery(String sql, PerRowOperation operation) 
             throws TransactionHandledSQLException;     
     
-    int doUpdate(String updateSql) throws TransactionHandledSQLException;
+    int doUpdate(String updateSql) 
+            throws TransactionHandledSQLException;
     
-    int doUpdate(String updateSql, Params params) throws TransactionHandledSQLException;
+    int doUpdate(String updateSql, Params params) 
+            throws TransactionHandledSQLException;
     
-    int doUpdate(String updateSql, Object... params) throws TransactionHandledSQLException;
+    int doUpdate(String updateSql, Object... params) 
+            throws TransactionHandledSQLException;
     
-    int doUpdate(String updateSql, List<Object> params) throws TransactionHandledSQLException;
+    int doUpdate(String updateSql, List<Object> params) 
+            throws TransactionHandledSQLException;
     
     int[] doBatchUpdate(String updateSql, Set<Params> batchParams) 
             throws TransactionHandledSQLException;
@@ -44,9 +72,11 @@ public interface JdbcTransaction {
     int[] doBatchUpdate(String updateSql, Params... batchParams) 
             throws TransactionHandledSQLException;
             
-    void commit() throws TransactionHandledSQLException;
+    void commit() 
+            throws TransactionHandledSQLException;
     
-    void rollbackAndTerminate() throws TransactionTerminationException;
+    void rollbackAndTerminate() 
+            throws TransactionTerminationException;
     
     void rollbackAndProceed();
     

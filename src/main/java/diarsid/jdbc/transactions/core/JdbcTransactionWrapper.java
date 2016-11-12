@@ -109,6 +109,117 @@ class JdbcTransactionWrapper implements JdbcTransaction {
     }
     
     @Override
+    public boolean doesQueryHaveResults(String sql) throws TransactionHandledSQLException {
+        try {
+            Statement statement = this.connection.createStatement();
+            ResultSet resultSet = statement.executeQuery(sql);
+            boolean hasResult = resultSet.first();
+            resultSet.close();
+            statement.close();
+            return hasResult;
+        } catch (SQLException ex) {
+            logger.error("Exception occured during query: ");
+            logger.error(sql);
+            logger.error("", ex);
+            this.rollbackAndFinishAfterException();
+            throw new TransactionHandledSQLException(ex);
+        }        
+    }
+    
+    @Override
+    public boolean doesQueryHaveResults(String sql, Object... params) 
+            throws TransactionHandledSQLException {
+        try {
+            PreparedStatement ps = this.connection.prepareStatement(sql);
+            this.paramsSetter.setParameters(ps, params);
+            ResultSet rs = ps.executeQuery();
+            boolean hasResult = rs.first();
+            ps.close();
+            rs.close();
+            return hasResult;
+        } catch (SQLException ex) {
+            logger.error("Exception occured during query: ");
+            logger.error(sql);
+            logger.error("...with params: " + this.concatenateParams(params));
+            logger.error("", ex);
+            this.rollbackAndFinishAfterException();
+            throw new TransactionHandledSQLException(ex);
+        }
+    }
+    
+    @Override
+    public boolean doesQueryHaveResults(String sql, List<Object> params) 
+            throws TransactionHandledSQLException {
+        return this.doesQueryHaveResults(sql, params.toArray());
+    }
+    
+    @Override
+    public boolean doesQueryHaveResults(String sql, Params params) 
+            throws TransactionHandledSQLException {
+        return this.doesQueryHaveResults(sql, params.get());
+    }
+    
+    @Override
+    public int countQueryResults(String sql) 
+            throws TransactionHandledSQLException {
+        try {
+            Statement statement = this.connection.createStatement();
+            ResultSet resultSet = statement.executeQuery(sql);
+            int resultingRowsQty = this.count(resultSet);
+            resultSet.close();
+            statement.close();
+            return resultingRowsQty;
+        } catch (SQLException ex) {
+            logger.error("Exception occured during query: ");
+            logger.error(sql);
+            logger.error("", ex);
+            this.rollbackAndFinishAfterException();
+            throw new TransactionHandledSQLException(ex);
+        }        
+    }
+    
+    @Override
+    public int countQueryResults(String sql, Object... params) 
+            throws TransactionHandledSQLException {
+        try {
+            PreparedStatement ps = this.connection.prepareStatement(sql);
+            this.paramsSetter.setParameters(ps, params);
+            ResultSet rs = ps.executeQuery();
+            int resultingRowsQty = this.count(rs);
+            rs.close();
+            ps.close();
+            return resultingRowsQty;
+        } catch (SQLException ex) {
+            logger.error("Exception occured during query: ");
+            logger.error(sql);
+            logger.error("...with params: " + this.concatenateParams(params));
+            logger.error("", ex);
+            this.rollbackAndFinishAfterException();
+            throw new TransactionHandledSQLException(ex);
+        }
+    }
+    
+    private int count(ResultSet rs) throws SQLException {
+        int count = 0;
+        while ( rs.next() ) {            
+            count++;
+        }
+        return count;
+    }
+    
+    @Override
+    public int countQueryResults(String sql, List<Object> params) 
+            throws TransactionHandledSQLException {
+        return this.countQueryResults(sql, params.toArray());
+    }
+    
+    @Override
+    public int countQueryResults(String sql, Params params) 
+            throws TransactionHandledSQLException {
+        return this.countQueryResults(sql, params.get());
+    }
+    
+    @Override
     public void doQuery(String sql, PerRowOperation operation, Object... params) 
             throws TransactionHandledSQLException {
         try {
