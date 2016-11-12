@@ -41,12 +41,22 @@ Simple SELECT query with wildcards:
 ```java
     try {
         JdbcTransaction transaction = factory.createTransaction();
+        
         transaction.doQuery(
                 "SELECT * " +
                 "FROM table " +
                 "WHERE ( col_1 IS ? ) AND ( col_2 IS ? ) ",  
                 doForEachRow(),         
-                "value_1", "value_2");  // <- wildcard (?) parameters
+                "value_1", "value_2");  // <- wildcard (?) parameters as Object...
+        
+        List<Object> paramsList = getYourParams();
+        transaction.doQuery(
+                "SELECT * " +
+                "FROM table " +
+                "WHERE ( col_1 IS ? ) AND ( col_2 IS ? ) ",  
+                doForEachRow(),         
+                paramsList);   // <- wildcard (?) parameters as List
+                
         transaction.commit();
     } catch (TransactionHandledException e) {
         // ... 
@@ -98,4 +108,68 @@ import static diarsid.jdbc.transactions.core.Params.params;
     } catch (TransactionHandledException e) {
         // ... 
     }  
+```
+Conditional methods execution:
+
+```java
+    try {
+        JdbcTransaction transaction = factory.createTransaction();
+
+        transaction
+                .ifTrue(yourCustomCondition())   // <- your boolean value here...
+                .doQuery(                        // <- ...this query will be invoked
+                        "SELECT * " +            //    only if yourCustomCondition()
+                        "FROM table ",           //    returned TRUE.
+                        doForEachRow());
+
+        transaction                              // <- rollback if true.
+                .ifTrue(someLogicalProblem())
+                .rollbackAndProceed();
+
+        transaction                              
+                .ifTrue(yourCustomCondition())
+                .countQueryResults(              // <- if TRUE, real query will be performed,
+                        "SELECT * " +            //    otherwise 0 will be returned.
+                        "FROM table");
+
+        transaction                              
+                .ifTrue(yourCustomCondition())
+                .doesQueryHaveResults(           // <- if TRUE, real query will be performed,
+                        "SELECT * " +            //    otherwise FALSE will be returned.
+                        "FROM table");
+
+        transaction                              
+                .ifTrue(yourCustomCondition())
+                .ifTrue(anotherCondition())      // <- UnsupportedOperationException!
+                .doesQueryHaveResults("...");
+
+        transaction.commit();
+    } catch (TransactionHandledException e) {
+        // ...
+    }
+```
+Transaction flow:
+
+```java
+    try {
+        JdbcTransaction transaction = factory.createTransaction();
+
+        // there are few ways to control JdbcTransaction flow:
+
+        // 1-st
+        transaction.rollbackAndProceed();   // <- transaction will only be rolled back,
+                                            //    but it remains open and valid for further work
+
+        // 2-nd                                    
+        transaction.rollbackAndTerminate();   // <- transaction will be rolled back and closed.
+                                              //    Exception will be thrown.
+
+        // 3-rd, the most obvious one.
+        transaction.commit();
+    } catch (TransactionHandledException e) {
+        // ...
+    } catch (TransactionTerminationException te) {   // <- this exception will be thrown
+        // here you can do actions you need                on .rollbackAndTerminate() invocation. 
+        // after transaction forcible termination               
+    }
 ```
