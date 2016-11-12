@@ -140,8 +140,14 @@ Conditional methods execution:
 
         transaction                              
                 .ifTrue(yourCustomCondition())
-                .ifTrue(anotherCondition())      // <- UnsupportedOperationException!
+                .ifTrue(anotherCondition())      // <- you could stack conditions if you need.
                 .doesQueryHaveResults("...");
+        
+        transaction                              
+                .ifTrue(conditionSupposedToBeTrue())
+                .ifTrue(conditionSupposedToBeFalse())  // <- if FALSE appeared at least at once,
+                .ifTrue(conditionSupposedToBeTrue())   //    operation will be omitted despite of 
+                .doesQueryHaveResults("...");          //    any other TRUE conditions.
 
         transaction.commit();
     } catch (TransactionHandledException e) {
@@ -171,5 +177,18 @@ Transaction flow:
     } catch (TransactionTerminationException te) {   // <- this exception will be thrown
         // here you can do actions you need                on .rollbackAndTerminate() invocation. 
         // after transaction forcible termination               
+    }
+```
+Disposable one-method-use-only autocommitted transaction:
+
+```java
+    try {
+        return factory.createDisposableTransaction()  // <- transaction for one use only.
+                .ifTrue(yourCustomCondition())        //    It doesn't require to be committed 
+                .doesQueryHaveResults(                //    manually, you could just return.
+                        "SELECT * " +                 //    If condition is FALSE, operation will be 
+                        "FROM table");                //    omitted and transaction will be closed properly.
+    } catch (TransactionHandledException e) {
+    // ...
     }
 ```
