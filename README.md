@@ -189,7 +189,7 @@ Disposable one-method-use-only autocommitted transaction:
                         "SELECT * " +                 //    If condition is FALSE, operation will be 
                         "FROM table");                //    omitted and transaction will be closed properly.
     } catch (TransactionHandledException e) {
-    // ...
+        // ...
     }
 ```
 Process the first row only:
@@ -208,7 +208,7 @@ Process the first row only:
                             // this method will not be invoked.
                         });                         
     } catch (TransactionHandledException e) {       
-    // ...
+        // ...
     }
 ```
 Convert and return data from the first row:
@@ -230,6 +230,6 @@ Convert and return data from the first row:
                         })                              
                 .get();                                 
     } catch (TransactionHandledException e) {        
-    // ...
+        // ...
     }
 ```
