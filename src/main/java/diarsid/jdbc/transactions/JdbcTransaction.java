@@ -6,6 +6,7 @@
 package diarsid.jdbc.transactions;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import diarsid.jdbc.transactions.core.Params;
@@ -52,7 +53,31 @@ public interface JdbcTransaction {
             throws TransactionHandledSQLException;
     
     void doQuery(String sql, PerRowOperation operation) 
-            throws TransactionHandledSQLException;     
+            throws TransactionHandledSQLException;
+    
+    void doQueryAndProcessFirstRow(String sql, FirstRowOperation operation) 
+            throws TransactionHandledSQLException;
+    
+    void doQueryAndProcessFirstRow(String sql, FirstRowOperation operation, Object... params) 
+            throws TransactionHandledSQLException;
+    
+    void doQueryAndProcessFirstRow(String sql, FirstRowOperation operation, List<Object> params) 
+            throws TransactionHandledSQLException;
+    
+    void doQueryAndProcessFirstRow(String sql, FirstRowOperation operation, Params params) 
+            throws TransactionHandledSQLException;
+    
+    Optional<Object> doQueryAndConvertFirstRow(String sql, FirstRowConversion conversion) 
+            throws TransactionHandledSQLException;
+    
+    Optional<Object> doQueryAndConvertFirstRow(String sql, FirstRowConversion conversion, Object... params) 
+            throws TransactionHandledSQLException;
+    
+    Optional<Object> doQueryAndConvertFirstRow(String sql, FirstRowConversion conversion, List<Object> params) 
+            throws TransactionHandledSQLException;
+    
+    Optional<Object> doQueryAndConvertFirstRow(String sql, FirstRowConversion conversion, Params params) 
+            throws TransactionHandledSQLException;
     
     int doUpdate(String updateSql) 
             throws TransactionHandledSQLException;

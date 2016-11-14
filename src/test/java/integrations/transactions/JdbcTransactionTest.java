@@ -23,6 +23,7 @@ import testing.embedded.base.h2.TestDataBase;
 
 import diarsid.jdbc.transactions.JdbcConnectionsSource;
 import diarsid.jdbc.transactions.JdbcTransaction;
+import diarsid.jdbc.transactions.Row;
 import diarsid.jdbc.transactions.core.JdbcPreparedStatementSetter;
 import diarsid.jdbc.transactions.core.JdbcTransactionFactory;
 import diarsid.jdbc.transactions.core.JdbcTransactionGuard;
@@ -31,6 +32,7 @@ import diarsid.jdbc.transactions.exceptions.TransactionTerminationException;
 
 import static java.lang.String.format;
 import static java.lang.Thread.sleep;
+import static java.util.Optional.of;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -192,14 +194,10 @@ public class JdbcTransactionTest {
     @Test
     public void testDoQuery_3args_1() throws Exception {
         JdbcTransaction transaction = createTransaction();
-        transaction.doQuery("SELECT * FROM table_1", (row) -> {
-            logger.info(
-                    format("id: %d, label: %s, index: %d, active: %s", 
-                           (int) row.get("id"),
-                           (String) row.get("label"),
-                           (int) row.get("index"),
-                           (boolean) row.get("active")));
-        });
+        transaction.doQuery("SELECT * FROM table_1", 
+                (row) -> {
+                    this.printDataFromRow(row, "multiple rows processing:");
+                });
         transaction.commit();
         
         assertTrue(TEST_BASE.ifAllConnectionsReleased());
@@ -211,20 +209,24 @@ public class JdbcTransactionTest {
     @Test
     public void testDoQuery_3args_2() throws Exception {
         JdbcTransaction transaction = createTransaction();
-        transaction.doQuery(
-                "SELECT * FROM table_1 WHERE label LIKE ? ", 
+        transaction.doQuery("SELECT * FROM table_1 WHERE label LIKE ? ", 
                 (row) -> {
-                    logger.info(
-                            format("id: %d, label: %s, index: %d, active: %s", 
-                                   (int) row.get("id"),
-                                   (String) row.get("label"),
-                                   (int) row.get("index"),
-                                   (boolean) row.get("active")));
+                    this.printDataFromRow(row, "multiple rows processing:");
                 },
                 "ame_1");
         transaction.commit();
         
         assertTrue(TEST_BASE.ifAllConnectionsReleased());
+    }
+
+    private void printDataFromRow(Row row, String comment) throws TransactionHandledSQLException {
+        logger.info(
+                format("[%s] id: %d, label: %s, index: %d, active: %s",
+                       comment,
+                       (int) row.get("id"),
+                       (String) row.get("label"),
+                       (int) row.get("index"),
+                       (boolean) row.get("active")));
     }
 
     /**
@@ -558,6 +560,35 @@ public class JdbcTransactionTest {
         
         int qtyAfterTrueCondition = TEST_BASE.countRowsInTable("table_1");
         assertEquals(3, qtyAfterTrueCondition);
+    }
+    
+    @Test
+    public void firstRowProcessTest() throws Exception {
+        createDisposableTransaction()
+                .doQueryAndProcessFirstRow(
+                        "SELECT TOP 1 * " +
+                        "FROM table_1 " +
+                        "ORDER BY index ", 
+                        (firstRow) -> {
+                            this.printDataFromRow(firstRow, "first row processing");
+                        });
+        assertTrue(TEST_BASE.ifAllConnectionsReleased());
+    }
+    
+    @Test
+    public void firstRowConvertTest() throws Exception {
+        String s = (String) createDisposableTransaction().doQueryAndConvertFirstRow(
+                "SELECT TOP 1 * " +
+                "FROM table_1 " +
+                "ORDER BY index ", 
+                (firstRow) -> { 
+                    return of( (String) firstRow.get("label"));
+                })
+                .get();        
+        
+        assertTrue(TEST_BASE.ifAllConnectionsReleased());
+        
+        assertEquals(row_1_label, s);
     }
 
 }

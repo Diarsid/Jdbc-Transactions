@@ -7,8 +7,11 @@
 package diarsid.jdbc.transactions.core;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
+import diarsid.jdbc.transactions.FirstRowConversion;
+import diarsid.jdbc.transactions.FirstRowOperation;
 import diarsid.jdbc.transactions.JdbcTransaction;
 import diarsid.jdbc.transactions.PerRowOperation;
 import diarsid.jdbc.transactions.exceptions.TransactionHandledSQLException;
@@ -141,6 +144,86 @@ class JdbcTransactionDisposableWrapper implements JdbcTransaction {
         this.checkIfNotUsed();
         this.wrappedTransaction.doQuery(sql, operation);
         this.commitTransactionAndMarkAsUsed();
+    }
+    
+    @Override
+    public void doQueryAndProcessFirstRow(
+            String sql, FirstRowOperation operation) 
+            throws TransactionHandledSQLException {
+        this.checkIfNotUsed();
+        this.wrappedTransaction.doQueryAndProcessFirstRow(sql, operation);
+        this.commitTransactionAndMarkAsUsed();
+    }
+    
+    @Override
+    public void doQueryAndProcessFirstRow(
+            String sql, FirstRowOperation operation, Object... params) 
+            throws TransactionHandledSQLException {
+        this.checkIfNotUsed();
+        this.wrappedTransaction.doQueryAndProcessFirstRow(sql, operation, params);
+        this.commitTransactionAndMarkAsUsed();
+    }
+    
+    @Override
+    public void doQueryAndProcessFirstRow(
+            String sql, FirstRowOperation operation, List<Object> params) 
+            throws TransactionHandledSQLException {
+        this.checkIfNotUsed();
+        this.wrappedTransaction.doQueryAndProcessFirstRow(sql, operation, params);
+        this.commitTransactionAndMarkAsUsed();
+    }
+    
+    @Override
+    public void doQueryAndProcessFirstRow(
+            String sql, FirstRowOperation operation, Params params) 
+            throws TransactionHandledSQLException {
+        this.checkIfNotUsed();
+        this.wrappedTransaction.doQueryAndProcessFirstRow(sql, operation, params);
+        this.commitTransactionAndMarkAsUsed();        
+    };
+    
+    @Override
+    public Optional<Object> doQueryAndConvertFirstRow(
+            String sql, FirstRowConversion conversion) 
+            throws TransactionHandledSQLException {
+        this.checkIfNotUsed();
+        Optional<Object> opt = this.wrappedTransaction
+                .doQueryAndConvertFirstRow(sql, conversion);
+        this.commitTransactionAndMarkAsUsed();
+        return opt;
+    }
+    
+    @Override
+    public Optional<Object> doQueryAndConvertFirstRow(
+            String sql, FirstRowConversion conversion, Object... params) 
+            throws TransactionHandledSQLException {
+        this.checkIfNotUsed();
+        Optional<Object> opt = this.wrappedTransaction
+                .doQueryAndConvertFirstRow(sql, conversion, params);
+        this.commitTransactionAndMarkAsUsed();
+        return opt;
+    }
+    
+    @Override
+    public Optional<Object> doQueryAndConvertFirstRow(
+            String sql, FirstRowConversion conversion, List<Object> params) 
+            throws TransactionHandledSQLException {
+        this.checkIfNotUsed();
+        Optional<Object> opt = this.wrappedTransaction
+                .doQueryAndConvertFirstRow(sql, conversion, params);
+        this.commitTransactionAndMarkAsUsed();
+        return opt;
+    }
+    
+    @Override
+    public Optional<Object> doQueryAndConvertFirstRow(
+            String sql, FirstRowConversion conversion, Params params) 
+            throws TransactionHandledSQLException {
+        this.checkIfNotUsed();
+        Optional<Object> opt = this.wrappedTransaction
+                .doQueryAndConvertFirstRow(sql, conversion, params);
+        this.commitTransactionAndMarkAsUsed();
+        return opt;
     }
 
     @Override

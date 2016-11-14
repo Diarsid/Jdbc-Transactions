@@ -7,12 +7,17 @@
 package diarsid.jdbc.transactions.core;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
+import diarsid.jdbc.transactions.FirstRowConversion;
+import diarsid.jdbc.transactions.FirstRowOperation;
 import diarsid.jdbc.transactions.JdbcTransaction;
 import diarsid.jdbc.transactions.PerRowOperation;
 import diarsid.jdbc.transactions.exceptions.TransactionHandledSQLException;
 import diarsid.jdbc.transactions.exceptions.TransactionTerminationException;
+
+import static java.util.Optional.empty;
 
 /**
  *
@@ -37,6 +42,10 @@ class JdbcTransactionStub implements JdbcTransaction {
     
     private String operationNotPerformedStringValue() {
         return "";
+    }
+    
+    private Optional<Object> operationNotPerformedOptionalValue() {
+        return empty();
     }
 
     @Override
@@ -129,6 +138,61 @@ class JdbcTransactionStub implements JdbcTransaction {
     public void doQuery(String sql, PerRowOperation operation, Params params) 
             throws TransactionHandledSQLException {
         // do nothing; 
+    }
+    
+    @Override
+    public void doQueryAndProcessFirstRow(String sql, FirstRowOperation operation) 
+            throws TransactionHandledSQLException {
+        // do nothing; 
+    }
+    
+    @Override
+    public void doQueryAndProcessFirstRow(
+            String sql, FirstRowOperation operation, Object... params) 
+            throws TransactionHandledSQLException {
+        // do nothing; 
+    }
+    
+    @Override
+    public void doQueryAndProcessFirstRow(
+            String sql, FirstRowOperation operation, List<Object> params) 
+            throws TransactionHandledSQLException {
+        // do nothing; 
+    }
+    
+    @Override
+    public void doQueryAndProcessFirstRow(
+            String sql, FirstRowOperation operation, Params params) 
+            throws TransactionHandledSQLException {
+        // do nothing; 
+    }
+    
+    @Override
+    public Optional<Object> doQueryAndConvertFirstRow(
+            String sql, FirstRowConversion conversion) 
+            throws TransactionHandledSQLException {
+        return this.operationNotPerformedOptionalValue();
+    }
+    
+    @Override
+    public Optional<Object> doQueryAndConvertFirstRow(
+            String sql, FirstRowConversion conversion, Object... params) 
+            throws TransactionHandledSQLException {
+        return this.operationNotPerformedOptionalValue();
+    }
+    
+    @Override
+    public Optional<Object> doQueryAndConvertFirstRow(
+            String sql, FirstRowConversion conversion, List<Object> params) 
+            throws TransactionHandledSQLException {
+        return this.operationNotPerformedOptionalValue();
+    }
+    
+    @Override
+    public Optional<Object> doQueryAndConvertFirstRow(
+            String sql, FirstRowConversion conversion, Params params) 
+            throws TransactionHandledSQLException {
+        return this.operationNotPerformedOptionalValue();
     }
 
     @Override

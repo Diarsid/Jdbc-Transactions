@@ -13,6 +13,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 import java.util.stream.Collectors;
@@ -20,6 +21,8 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import diarsid.jdbc.transactions.FirstRowConversion;
+import diarsid.jdbc.transactions.FirstRowOperation;
 import diarsid.jdbc.transactions.JdbcTransaction;
 import diarsid.jdbc.transactions.PerRowOperation;
 import diarsid.jdbc.transactions.Row;
@@ -31,6 +34,7 @@ import diarsid.jdbc.transactions.exceptions.TransactionTerminationException;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
+import static java.util.Optional.empty;
 
 
 class JdbcTransactionWrapper implements JdbcTransaction {
@@ -110,6 +114,7 @@ class JdbcTransactionWrapper implements JdbcTransaction {
     
     @Override
     public boolean doesQueryHaveResults(String sql) throws TransactionHandledSQLException {
+        this.sqlHistory.add(sql);
         try {
             Statement statement = this.connection.createStatement();
             ResultSet resultSet = statement.executeQuery(sql);
@@ -129,6 +134,7 @@ class JdbcTransactionWrapper implements JdbcTransaction {
     @Override
     public boolean doesQueryHaveResults(String sql, Object... params) 
             throws TransactionHandledSQLException {
+        this.sqlHistory.add(sql, params);
         try {
             PreparedStatement ps = this.connection.prepareStatement(sql);
             this.paramsSetter.setParameters(ps, params);
@@ -162,6 +168,7 @@ class JdbcTransactionWrapper implements JdbcTransaction {
     @Override
     public int countQueryResults(String sql) 
             throws TransactionHandledSQLException {
+        this.sqlHistory.add(sql);
         try {
             Statement statement = this.connection.createStatement();
             ResultSet resultSet = statement.executeQuery(sql);
@@ -181,6 +188,7 @@ class JdbcTransactionWrapper implements JdbcTransaction {
     @Override
     public int countQueryResults(String sql, Object... params) 
             throws TransactionHandledSQLException {
+        this.sqlHistory.add(sql, params);
         try {
             PreparedStatement ps = this.connection.prepareStatement(sql);
             this.paramsSetter.setParameters(ps, params);
@@ -222,6 +230,7 @@ class JdbcTransactionWrapper implements JdbcTransaction {
     @Override
     public void doQuery(String sql, PerRowOperation operation, Object... params) 
             throws TransactionHandledSQLException {
+        this.sqlHistory.add(sql, params);
         try {
             PreparedStatement ps = this.connection.prepareStatement(sql);
             this.paramsSetter.setParameters(ps, params);
@@ -280,6 +289,132 @@ class JdbcTransactionWrapper implements JdbcTransaction {
             this.rollbackAndFinishAfterException();
             throw new TransactionHandledSQLException(ex);
         }
+    }
+    
+    @Override
+    public void doQueryAndProcessFirstRow(
+            String sql, FirstRowOperation operation) 
+            throws TransactionHandledSQLException {
+        this.sqlHistory.add(sql);
+        try {
+            Statement st = this.connection.createStatement();
+            ResultSet rs = st.executeQuery(sql);
+            if ( rs.first() ) {
+                operation.process(this.wrapResultSetIntoRow(rs));
+            } 
+            rs.close();
+            st.close();
+        } catch (SQLException ex) {
+            logger.error("Exception occured during query: ");
+            logger.error(sql);
+            logger.error("", ex);
+            this.rollbackAndFinishAfterException();
+            throw new TransactionHandledSQLException(ex);
+        }
+    }
+    
+    @Override
+    public void doQueryAndProcessFirstRow(
+            String sql, FirstRowOperation operation, Object... params) 
+            throws TransactionHandledSQLException {
+        this.sqlHistory.add(sql, params);
+        try {
+            PreparedStatement ps = this.connection.prepareStatement(sql);
+            this.paramsSetter.setParameters(ps, params);
+            ResultSet rs = ps.executeQuery();
+            if ( rs.first() ) {
+                operation.process(this.wrapResultSetIntoRow(rs));
+            } 
+            rs.close();
+            ps.close();
+        } catch (SQLException ex) {
+            logger.error("Exception occured during query: ");
+            logger.error(sql);
+            logger.error("", ex);
+            this.rollbackAndFinishAfterException();
+            throw new TransactionHandledSQLException(ex);
+        }
+    }
+    
+    @Override
+    public void doQueryAndProcessFirstRow(
+            String sql, FirstRowOperation operation, List<Object> params) 
+            throws TransactionHandledSQLException {
+        this.doQueryAndProcessFirstRow(sql, operation, params.toArray());
+    }
+    
+    @Override
+    public void doQueryAndProcessFirstRow(
+            String sql, FirstRowOperation operation, Params params) 
+            throws TransactionHandledSQLException {
+        this.doQueryAndProcessFirstRow(sql, operation, params.get());
+    }
+    
+    @Override
+    public Optional<Object> doQueryAndConvertFirstRow(
+            String sql, FirstRowConversion conversion) 
+            throws TransactionHandledSQLException {
+        this.sqlHistory.add(sql);
+        try {
+            Statement st = this.connection.createStatement();
+            ResultSet rs = st.executeQuery(sql);
+            Optional<Object> optional;
+            if ( rs.first() ) {
+                optional = conversion.convert(this.wrapResultSetIntoRow(rs));
+            } else {
+                optional = empty();
+            }
+            rs.close();
+            st.close();
+            return optional;
+        } catch (SQLException ex) {
+            logger.error("Exception occured during query: ");
+            logger.error(sql);
+            logger.error("", ex);
+            this.rollbackAndFinishAfterException();
+            throw new TransactionHandledSQLException(ex);
+        }
+    }
+    
+    @Override
+    public Optional<Object> doQueryAndConvertFirstRow(
+            String sql, FirstRowConversion conversion, Object... params) 
+            throws TransactionHandledSQLException {
+        this.sqlHistory.add(sql, params);
+        try {
+            PreparedStatement ps = this.connection.prepareStatement(sql);
+            this.paramsSetter.setParameters(ps, params);
+            ResultSet rs = ps.executeQuery();
+            Optional<Object> optional;
+            if ( rs.first() ) {
+                optional = conversion.convert(this.wrapResultSetIntoRow(rs));
+            } else {
+                optional = empty();
+            }
+            rs.close();
+            ps.close();
+            return optional;
+        } catch (SQLException ex) {
+            logger.error("Exception occured during query: ");
+            logger.error(sql);
+            logger.error("", ex);
+            this.rollbackAndFinishAfterException();
+            throw new TransactionHandledSQLException(ex);
+        }
+    }
+    
+    @Override
+    public Optional<Object> doQueryAndConvertFirstRow(
+            String sql, FirstRowConversion conversion, List<Object> params) 
+            throws TransactionHandledSQLException {
+        return this.doQueryAndConvertFirstRow(sql, conversion, params.toArray());
+    }
+    
+    @Override
+    public Optional<Object> doQueryAndConvertFirstRow(
+            String sql, FirstRowConversion conversion, Params params) 
+            throws TransactionHandledSQLException {
+        return this.doQueryAndConvertFirstRow(sql, conversion, params.get());
     }
     
     @Override
