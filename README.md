@@ -189,6 +189,47 @@ Disposable one-method-use-only autocommitted transaction:
                         "SELECT * " +                 //    If condition is FALSE, operation will be 
                         "FROM table");                //    omitted and transaction will be closed properly.
     } catch (TransactionHandledException e) {
-    // ...
+        // ...
+    }
+```
+Process the first row only:
+
+```java
+    try {
+        factory.createDisposableTransaction()         
+                .doQueryAndProcessFirstRow(     // <- process the first row only
+                        "SELECT TOP 1 * " +
+                        "FROM table " +
+                        "ORDER BY some_col",
+                        (firstRow) -> {
+                            // do anything you need with 
+                            // the first sql resulting table row.
+                            // If there aren't any rows at all, 
+                            // this method will not be invoked.
+                        });                         
+    } catch (TransactionHandledException e) {       
+        // ...
+    }
+```
+Convert and return data from the first row:
+
+```java
+    try {
+        return factory.createDisposableTransaction()         
+                .doQueryAndConvertFirstRow( 
+                        "SELECT TOP 1 * " +
+                        "FROM table " +
+                        "ORDER BY some_col",
+                        (firstRow) -> {
+                            // use the first row to get your data...
+                            Object yourData = (int) firstRow.get("column"); 
+                            // ...and return your data inside of Optional.
+                            return Optional.of(yourData);
+                            // if the first row does not exist, your method  
+                            // will not be invoked and empty Optional will be returned instead. 
+                        })                              
+                .get();                                 
+    } catch (TransactionHandledException e) {        
+        // ...
     }
 ```
