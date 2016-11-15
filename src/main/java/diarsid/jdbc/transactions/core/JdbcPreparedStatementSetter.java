@@ -26,12 +26,14 @@ public class JdbcPreparedStatementSetter {
     
     public JdbcPreparedStatementSetter(
             JdbcPreparedStatementParamSetter... additionalSetters) {
-        Set<JdbcPreparedStatementParamSetter> newSetters = new HashSet<>();
-        newSetters.add(new ParamSetterString());
-        newSetters.add(new ParamSetterBool());
-        newSetters.add(new ParamSetterInt());
-        newSetters.addAll(asList(additionalSetters));
-        this.setters = unmodifiableSet(newSetters);
+        Set<JdbcPreparedStatementParamSetter> defaultSetters = new HashSet<>();
+        defaultSetters.add(new ParamSetterString());
+        defaultSetters.add(new ParamSetterBool());
+        defaultSetters.add(new ParamSetterInt());
+        defaultSetters.add(new ParamSetterByteArray());
+        defaultSetters.add(new ParamSetterBinaryStream());
+        defaultSetters.addAll(asList(additionalSetters));
+        this.setters = unmodifiableSet(defaultSetters);
     }
     
     void setParameters(PreparedStatement statement, Object[] args) throws SQLException {
