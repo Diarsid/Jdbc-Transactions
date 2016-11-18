@@ -233,3 +233,23 @@ Convert and return data from the first row:
         // ...
     }
 ```
+
+JdbcTransaction also is AutoCloseable thus it can be used with Java try-with-resources:
+```java
+    try (JdbcTransaction transaction =              // <- if you use try-with-resources you can
+                factory.createTransaction()) {      //    omit commit() call. It will be comitted
+                                                    //    automatically
+        transaction
+                .doQuery(
+                        "SELECT * " +
+                        "FROM table " +
+                        "WHERE  ( col_a IS ? ) AND ( col_b IS ? )", 
+                        (row) -> {
+                            // process result rows...
+                        }, 
+                        "param_1", 42);
+                                                    // <- commit() can be omitted.
+    } catch (TransactionHandledException e) {        
+        // ...
+    } 
+```
