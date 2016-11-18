@@ -57,6 +57,16 @@ class JdbcTransactionWrapper implements JdbcTransaction {
         this.sqlHistory = sqlHistory;
     }
     
+    /**
+     * AutoCloseable interface method.
+     * JdbcTransaction extends AutoCloseable in order to be legal
+     * for try-with-resources usage.
+     */
+    @Override
+    public void close() {
+        this.commit();
+    }
+    
     private void restoreAutoCommit() {
         try {
             this.connection.setAutoCommit(true);

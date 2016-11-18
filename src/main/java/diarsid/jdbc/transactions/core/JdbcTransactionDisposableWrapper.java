@@ -43,6 +43,11 @@ class JdbcTransactionDisposableWrapper implements JdbcTransaction {
         this.marker.markUsed();
         this.wrappedTransaction.commit();       
     }
+    
+    @Override
+    public void close() {
+        this.commit();
+    }
 
     @Override
     public boolean doesQueryHaveResults(String sql) throws TransactionHandledSQLException {
@@ -280,7 +285,7 @@ class JdbcTransactionDisposableWrapper implements JdbcTransaction {
     }
 
     @Override
-    public void commit() throws TransactionHandledSQLException {
+    public void commit() {
         try {
             this.commitTransactionAndMarkAsUsed();
         } finally {

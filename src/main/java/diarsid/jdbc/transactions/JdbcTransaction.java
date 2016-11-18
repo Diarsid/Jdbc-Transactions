@@ -17,7 +17,10 @@ import diarsid.jdbc.transactions.exceptions.TransactionTerminationException;
  *
  * @author Diarsid
  */
-public interface JdbcTransaction {
+public interface JdbcTransaction extends AutoCloseable {
+    
+    @Override
+    void close();
     
     boolean doesQueryHaveResults(String sql) 
             throws TransactionHandledSQLException;

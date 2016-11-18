@@ -463,7 +463,37 @@ public class JdbcTransactionTest {
         int qtyAfterTrueCondition = TEST_BASE.countRowsInTable("table_1");
         assertEquals(3, qtyAfterTrueCondition);
     }
-    
+
+    @Test
+    public void testAutoCloseableTransaction() {
+        int qtyBefore = TEST_BASE.countRowsInTable("table_1");
+        assertEquals(3, qtyBefore);
+        
+        try (JdbcTransaction transaction = createTransaction()) {
+            
+            transaction
+                    .doBatchUpdate(
+                            TABLE_1_INSERT,
+                            params(4, "name_4", 40, false),
+                            params(5, "name_5", 50, false),
+                            params(6, "name_6", 60, false));
+            
+            int count = transaction
+                    .countQueryResults(
+                            "SELECT * FROM table_1");
+            
+            assertEquals(6, count);
+            
+            //transaction.commit();   <- explicit commit() call is omitted!
+        } catch (TransactionHandledSQLException e) {
+            fail();
+        }
+        
+        assertTrue(TEST_BASE.ifAllConnectionsReleased());
+        
+        int qtyAfterTrueCondition = TEST_BASE.countRowsInTable("table_1");
+        assertEquals(6, qtyAfterTrueCondition);
+    }    
     
     @Test
     public void disposableTransactionTest() throws Exception {

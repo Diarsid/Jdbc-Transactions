@@ -47,6 +47,11 @@ class JdbcTransactionStub implements JdbcTransaction {
     private Optional<Object> operationNotPerformedOptionalValue() {
         return empty();
     }
+    
+    @Override
+    public void close() {
+        this.commit();
+    }
 
     @Override
     public boolean doesQueryHaveResults(String sql) 
@@ -67,7 +72,7 @@ class JdbcTransactionStub implements JdbcTransaction {
     }
 
     @Override
-    public void commit() throws TransactionHandledSQLException {
+    public void commit() {
         // do nothing;
     }
 
