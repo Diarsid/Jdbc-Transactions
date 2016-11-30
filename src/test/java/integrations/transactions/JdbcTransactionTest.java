@@ -10,6 +10,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
 
 import org.junit.After;
 import org.junit.Before;
@@ -33,6 +34,7 @@ import diarsid.jdbc.transactions.exceptions.TransactionTerminationException;
 import static java.lang.String.format;
 import static java.lang.Thread.sleep;
 import static java.util.Optional.of;
+import static java.util.stream.Collectors.toList;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -569,6 +571,29 @@ public class JdbcTransactionTest {
         
         int qtyAfterTrueCondition = TEST_BASE.countRowsInTable("table_1");
         assertEquals(3, qtyAfterTrueCondition);
+    }
+    
+    @Test
+    public void streamedQueryTest() throws Exception {
+        
+        int qty = TEST_BASE.countRowsInTable("table_1");
+        assertEquals(3, qty);
+        
+        List<String> list = createDisposableTransaction()
+                .doQueryAndStream(
+                        "SELECT * " +
+                        "FROM table_1", 
+                        (row) -> {
+                            return (int) row.get("index");
+                        },
+                        int.class)
+                .filter(i -> i > 0)
+                .map(i -> String.valueOf(i) + ": index")
+                .collect(toList());
+        
+        assertEquals(3, list.size());
+        
+        assertTrue(TEST_BASE.ifAllConnectionsReleased());
     }
     
     @Test

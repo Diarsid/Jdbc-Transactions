@@ -8,6 +8,7 @@ package diarsid.jdbc.transactions;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import diarsid.jdbc.transactions.core.Params;
 import diarsid.jdbc.transactions.exceptions.TransactionHandledSQLException;
@@ -58,6 +59,22 @@ public interface JdbcTransaction extends AutoCloseable {
     void doQuery(String sql, PerRowOperation operation) 
             throws TransactionHandledSQLException;
     
+    <T> Stream<T> doQueryAndStream(
+            String sql, PerRowConversion<T> conversion, Class<T> type) 
+            throws TransactionHandledSQLException;
+    
+    <T> Stream<T> doQueryAndStream(
+            String sql, PerRowConversion<T> conversion, Class<T> type, Object... params) 
+            throws TransactionHandledSQLException;
+    
+    <T> Stream<T> doQueryAndStream(
+            String sql, PerRowConversion<T> conversion, Class<T> type, List<Object> params) 
+            throws TransactionHandledSQLException;
+    
+    <T> Stream<T> doQueryAndStream(
+            String sql, PerRowConversion<T> conversion, Class<T> type, Params params) 
+            throws TransactionHandledSQLException;
+    
     void doQueryAndProcessFirstRow(String sql, FirstRowOperation operation) 
             throws TransactionHandledSQLException;
     
@@ -70,16 +87,20 @@ public interface JdbcTransaction extends AutoCloseable {
     void doQueryAndProcessFirstRow(String sql, FirstRowOperation operation, Params params) 
             throws TransactionHandledSQLException;
     
-    Optional<Object> doQueryAndConvertFirstRow(String sql, FirstRowConversion conversion) 
+    Optional<Object> doQueryAndConvertFirstRow(
+            String sql, FirstRowConversion conversion) 
             throws TransactionHandledSQLException;
     
-    Optional<Object> doQueryAndConvertFirstRow(String sql, FirstRowConversion conversion, Object... params) 
+    Optional<Object> doQueryAndConvertFirstRow(
+            String sql, FirstRowConversion conversion, Object... params) 
             throws TransactionHandledSQLException;
     
-    Optional<Object> doQueryAndConvertFirstRow(String sql, FirstRowConversion conversion, List<Object> params) 
+    Optional<Object> doQueryAndConvertFirstRow(
+            String sql, FirstRowConversion conversion, List<Object> params) 
             throws TransactionHandledSQLException;
     
-    Optional<Object> doQueryAndConvertFirstRow(String sql, FirstRowConversion conversion, Params params) 
+    Optional<Object> doQueryAndConvertFirstRow(
+            String sql, FirstRowConversion conversion, Params params) 
             throws TransactionHandledSQLException;
     
     int doUpdate(String updateSql) 

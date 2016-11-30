@@ -9,10 +9,12 @@ package diarsid.jdbc.transactions.core;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import diarsid.jdbc.transactions.FirstRowConversion;
 import diarsid.jdbc.transactions.FirstRowOperation;
 import diarsid.jdbc.transactions.JdbcTransaction;
+import diarsid.jdbc.transactions.PerRowConversion;
 import diarsid.jdbc.transactions.PerRowOperation;
 import diarsid.jdbc.transactions.exceptions.TransactionHandledSQLException;
 import diarsid.jdbc.transactions.exceptions.TransactionTerminationException;
@@ -149,6 +151,46 @@ class JdbcTransactionDisposableWrapper implements JdbcTransaction {
         this.checkIfNotUsed();
         this.wrappedTransaction.doQuery(sql, operation);
         this.commitTransactionAndMarkAsUsed();
+    }
+    
+    @Override
+    public <T> Stream<T> doQueryAndStream(
+            String sql, PerRowConversion<T> conversion, Class<T> type) 
+            throws TransactionHandledSQLException {
+        this.checkIfNotUsed();
+        Stream<T> stream = this.wrappedTransaction.doQueryAndStream(sql, conversion, type);
+        this.commitTransactionAndMarkAsUsed();
+        return stream;
+    }
+    
+    @Override
+    public <T> Stream<T> doQueryAndStream(
+            String sql, PerRowConversion<T> conversion, Class<T> type, Object... params) 
+            throws TransactionHandledSQLException {
+        this.checkIfNotUsed();
+        Stream<T> stream = this.wrappedTransaction.doQueryAndStream(sql, conversion, type, params);
+        this.commitTransactionAndMarkAsUsed();
+        return stream;
+    }
+    
+    @Override
+    public <T> Stream<T> doQueryAndStream(
+            String sql, PerRowConversion<T> conversion, Class<T> type, List<Object> params) 
+            throws TransactionHandledSQLException {
+        this.checkIfNotUsed();
+        Stream<T> stream = this.wrappedTransaction.doQueryAndStream(sql, conversion, type, params);
+        this.commitTransactionAndMarkAsUsed();
+        return stream;
+    }
+    
+    @Override
+    public <T> Stream<T> doQueryAndStream(
+            String sql, PerRowConversion<T> conversion, Class<T> type, Params params) 
+            throws TransactionHandledSQLException {
+        this.checkIfNotUsed();
+        Stream<T> stream = this.wrappedTransaction.doQueryAndStream(sql, conversion, type, params);
+        this.commitTransactionAndMarkAsUsed();
+        return stream;
     }
     
     @Override

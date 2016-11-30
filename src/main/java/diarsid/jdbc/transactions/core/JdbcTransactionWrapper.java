@@ -17,6 +17,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import diarsid.jdbc.transactions.FirstRowConversion;
 import diarsid.jdbc.transactions.FirstRowOperation;
 import diarsid.jdbc.transactions.JdbcTransaction;
+import diarsid.jdbc.transactions.PerRowConversion;
 import diarsid.jdbc.transactions.PerRowOperation;
 import diarsid.jdbc.transactions.Row;
 import diarsid.jdbc.transactions.exceptions.JdbcFailureException;
@@ -299,6 +301,72 @@ class JdbcTransactionWrapper implements JdbcTransaction {
             this.rollbackAndFinishAfterException();
             throw new TransactionHandledSQLException(ex);
         }
+    }
+    
+    @Override
+    public <T> Stream<T> doQueryAndStream(
+            String sql, PerRowConversion<T> conversion, Class<T> type) 
+            throws TransactionHandledSQLException {
+        this.sqlHistory.add(sql);
+        try {
+            Statement st = this.connection.createStatement();
+            ResultSet rs = st.executeQuery(sql);
+            Row row = this.wrapResultSetIntoRow(rs);
+            Stream.Builder<T> builder = Stream.builder();
+            while ( rs.next() ) {
+                builder.accept(conversion.convert(row));
+            }            
+            st.close();
+            rs.close();
+            return builder.build();
+        } catch (SQLException ex) {
+            logger.error("Exception occured during query: ");
+            logger.error(sql);
+            logger.error("", ex);
+            this.rollbackAndFinishAfterException();
+            throw new TransactionHandledSQLException(ex);
+        }
+    }
+    
+    @Override
+    public <T> Stream<T> doQueryAndStream(
+            String sql, PerRowConversion<T> conversion, Class<T> type, Object... params) 
+            throws TransactionHandledSQLException {
+        this.sqlHistory.add(sql, params);
+        try {
+            PreparedStatement ps = this.connection.prepareStatement(sql);
+            this.paramsSetter.setParameters(ps, params);
+            ResultSet rs = ps.executeQuery();
+            Row row = this.wrapResultSetIntoRow(rs);
+            Stream.Builder<T> builder = Stream.builder();
+            while ( rs.next() ) {
+                builder.accept(conversion.convert(row));
+            }            
+            ps.close();
+            rs.close();
+            return builder.build();
+        } catch (SQLException ex) {
+            logger.error("Exception occured during query: ");
+            logger.error(sql);
+            logger.error("...with params: " + this.concatenateParams(params));
+            logger.error("", ex);
+            this.rollbackAndFinishAfterException();
+            throw new TransactionHandledSQLException(ex);
+        }
+    }
+    
+    @Override
+    public <T> Stream<T> doQueryAndStream(
+            String sql, PerRowConversion<T> conversion, Class<T> type, List<Object> params) 
+            throws TransactionHandledSQLException {
+        return this.doQueryAndStream(sql, conversion, type, params.toArray());
+    }
+    
+    @Override
+    public <T> Stream<T> doQueryAndStream(
+            String sql, PerRowConversion<T> conversion, Class<T> type, Params params) 
+            throws TransactionHandledSQLException {
+        return this.doQueryAndStream(sql, conversion, type, params.get());
     }
     
     @Override

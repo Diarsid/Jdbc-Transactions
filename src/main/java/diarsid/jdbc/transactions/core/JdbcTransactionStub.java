@@ -9,15 +9,15 @@ package diarsid.jdbc.transactions.core;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import diarsid.jdbc.transactions.FirstRowConversion;
 import diarsid.jdbc.transactions.FirstRowOperation;
 import diarsid.jdbc.transactions.JdbcTransaction;
+import diarsid.jdbc.transactions.PerRowConversion;
 import diarsid.jdbc.transactions.PerRowOperation;
 import diarsid.jdbc.transactions.exceptions.TransactionHandledSQLException;
 import diarsid.jdbc.transactions.exceptions.TransactionTerminationException;
-
-import static java.util.Optional.empty;
 
 /**
  *
@@ -45,7 +45,11 @@ class JdbcTransactionStub implements JdbcTransaction {
     }
     
     private Optional<Object> operationNotPerformedOptionalValue() {
-        return empty();
+        return Optional.empty();
+    }    
+    
+    private <T> Stream<T> operationNotPerformedEmptyStream(Class<T> type) {
+        return Stream.empty();
     }
     
     @Override
@@ -143,6 +147,34 @@ class JdbcTransactionStub implements JdbcTransaction {
     public void doQuery(String sql, PerRowOperation operation, Params params) 
             throws TransactionHandledSQLException {
         // do nothing; 
+    }
+    
+    @Override
+    public <T> Stream<T> doQueryAndStream(
+            String sql, PerRowConversion<T> conversion, Class<T> type) 
+            throws TransactionHandledSQLException {
+        return this.operationNotPerformedEmptyStream(type);
+    }
+    
+    @Override
+    public <T> Stream<T> doQueryAndStream(
+            String sql, PerRowConversion<T> conversion, Class<T> type, Object... params) 
+            throws TransactionHandledSQLException {
+        return this.operationNotPerformedEmptyStream(type);
+    }
+    
+    @Override
+    public <T> Stream<T> doQueryAndStream(
+            String sql, PerRowConversion<T> conversion, Class<T> type, List<Object> params) 
+            throws TransactionHandledSQLException {
+        return this.operationNotPerformedEmptyStream(type);
+    }
+    
+    @Override
+    public <T> Stream<T> doQueryAndStream(
+            String sql, PerRowConversion<T> conversion, Class<T> type, Params params) 
+            throws TransactionHandledSQLException {
+        return this.operationNotPerformedEmptyStream(type);
     }
     
     @Override
