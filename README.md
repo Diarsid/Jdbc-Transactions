@@ -253,3 +253,26 @@ JdbcTransaction also is AutoCloseable thus it can be used with Java try-with-res
         // ...
     } 
 ```
+
+Query methods for Java 8 Streams:
+```java
+    try (JdbcTransaction transaction =              
+                factory.createTransaction()) {      
+                                                    
+        Stream<MyEntity> stream = transaction
+                .doQueryAndStream(                  // <- query method returning Stream<T>
+                        "SELECT * " +
+                        "FROM table " +
+                        "WHERE ( col_a IS ? ) AND ( col_b IS ? )", 
+                        (row) -> {                                  // <- row-to-object conversion.
+                            return new MyEntity(                    //    Each object, created here,
+                                (String) row.get("col_string"),     //    will be returned in Stream
+                                (int) row.get("col_int"));
+                        }, 
+                        MyEntity.class,     // <- T type of Stream<T>. It have to be specified as explicit 
+                        "param_1", 42);     //    method argument due to Java Generics limitation.
+                                                    
+    } catch (TransactionHandledException e) {        
+        // ...
+    } 
+```
