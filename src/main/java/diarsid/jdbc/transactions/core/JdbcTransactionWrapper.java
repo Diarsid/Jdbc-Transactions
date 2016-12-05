@@ -11,6 +11,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -22,6 +23,7 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import diarsid.jdbc.transactions.DirectJdbcOperation;
 import diarsid.jdbc.transactions.FirstRowConversion;
 import diarsid.jdbc.transactions.FirstRowOperation;
 import diarsid.jdbc.transactions.JdbcTransaction;
@@ -30,6 +32,7 @@ import diarsid.jdbc.transactions.PerRowOperation;
 import diarsid.jdbc.transactions.Row;
 import diarsid.jdbc.transactions.exceptions.JdbcFailureException;
 import diarsid.jdbc.transactions.exceptions.JdbcPreparedStatementParamsException;
+import diarsid.jdbc.transactions.exceptions.TransactionHandledException;
 import diarsid.jdbc.transactions.exceptions.TransactionHandledSQLException;
 import diarsid.jdbc.transactions.exceptions.TransactionTerminationException;
 
@@ -37,6 +40,8 @@ import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
 import static java.util.Optional.empty;
+
+import static diarsid.jdbc.transactions.core.SqlConnectionProxyFactory.createProxy;
 
 
 class JdbcTransactionWrapper implements JdbcTransaction {
@@ -367,6 +372,34 @@ class JdbcTransactionWrapper implements JdbcTransaction {
             String sql, PerRowConversion<T> conversion, Class<T> type, Params params) 
             throws TransactionHandledSQLException {
         return this.doQueryAndStream(sql, conversion, type, params.get());
+    }
+    
+    @Override
+    public void useJdbcDirectly(DirectJdbcOperation jdbcOperation) 
+            throws TransactionHandledException {
+        this.sqlHistory.add(
+                "[DIRECT JDBC OPERATION] " +
+                "sql history is unreacheable for this operation.");
+        try {
+            List<AutoCloseable> openedCloseables = new ArrayList<>();
+            Connection proxiedConnection = createProxy(this.connection, openedCloseables);
+            jdbcOperation.operateJdbcDirectly(proxiedConnection);
+            for ( AutoCloseable resource : openedCloseables ) {
+                resource.close();
+            }
+        } catch (SQLException ex) {
+            logger.error("Exception occured during directly performed JDBC operation: ");
+            logger.error("", ex);
+            this.rollbackAndFinishAfterException();
+            throw new TransactionHandledSQLException(ex);
+        } catch (Exception e) {
+            logger.error(
+                    "Exception occured during directly performed JDBC operation - " +
+                    "exceptiond in AutoCloseable.close(): ");
+            logger.error("", e);
+            this.rollbackAndFinishAfterException();
+            throw new TransactionHandledException(e);
+        } 
     }
     
     @Override

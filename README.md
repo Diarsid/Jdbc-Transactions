@@ -276,3 +276,36 @@ Query methods for Java 8 Streams:
         // ...
     } 
 ```
+Direct access to JDBC through the java.sql.Connection:
+java```
+    try (JdbcTransaction transaction =              
+                factory.createTransaction()) {     
+        
+        transaction.useJdbcDirectly(
+                (connection) -> {
+                    Statement st = connection.createStatement();
+                    ResultSet rs = st.executeQuery("SELECT * FROM table");
+                    while ( rs.next() ) {
+                        // do anything
+                    }                       // <- there is no need to close anything manually
+                });
+        
+        // Don't do these things:
+        transaction.useJdbcDirectly(
+                (connection) -> {       
+                    Statement st = connection.createStatement();
+                    Connection conn = st.getConnection();  //  <- this is NOT transaction-managed connection
+                    conn.prepareStatement("...");          //     and any resources opened using it will
+                                                           //     not be managed and closed automatically
+                                                           
+                    connection.setAutoCommit(anyBoolean());  // these methods are forbidden because they
+                    connection.rollback();                   // they are altering JdbcTransaction behavior.
+                    connection.commit();                     // Any attempt to invoke them will throw an exception.
+                                                             
+                    connection.close();   // <- .close() and .abort(...) methods 
+                });                       //    invocations will be ignored.
+                                                    
+    } catch (TransactionHandledException e) {        
+        // ...
+    }
+```

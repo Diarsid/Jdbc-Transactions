@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import diarsid.jdbc.transactions.core.Params;
+import diarsid.jdbc.transactions.exceptions.TransactionHandledException;
 import diarsid.jdbc.transactions.exceptions.TransactionHandledSQLException;
 import diarsid.jdbc.transactions.exceptions.TransactionTerminationException;
 
@@ -58,6 +59,9 @@ public interface JdbcTransaction extends AutoCloseable {
     
     void doQuery(String sql, PerRowOperation operation) 
             throws TransactionHandledSQLException;
+    
+    void useJdbcDirectly(DirectJdbcOperation jdbcOperation) 
+            throws TransactionHandledException;
     
     <T> Stream<T> doQueryAndStream(
             String sql, PerRowConversion<T> conversion, Class<T> type) 

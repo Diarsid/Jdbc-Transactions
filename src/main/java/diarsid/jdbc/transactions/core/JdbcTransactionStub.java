@@ -11,11 +11,13 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import diarsid.jdbc.transactions.DirectJdbcOperation;
 import diarsid.jdbc.transactions.FirstRowConversion;
 import diarsid.jdbc.transactions.FirstRowOperation;
 import diarsid.jdbc.transactions.JdbcTransaction;
 import diarsid.jdbc.transactions.PerRowConversion;
 import diarsid.jdbc.transactions.PerRowOperation;
+import diarsid.jdbc.transactions.exceptions.TransactionHandledException;
 import diarsid.jdbc.transactions.exceptions.TransactionHandledSQLException;
 import diarsid.jdbc.transactions.exceptions.TransactionTerminationException;
 
@@ -202,6 +204,12 @@ class JdbcTransactionStub implements JdbcTransaction {
             String sql, FirstRowOperation operation, Params params) 
             throws TransactionHandledSQLException {
         // do nothing; 
+    }
+    
+    @Override
+    public void useJdbcDirectly(DirectJdbcOperation jdbcOperation) 
+            throws TransactionHandledException {
+        // do nothing;
     }
     
     @Override

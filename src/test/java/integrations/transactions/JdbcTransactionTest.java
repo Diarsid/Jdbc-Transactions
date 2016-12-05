@@ -8,8 +8,10 @@ package integrations.transactions;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.After;
@@ -28,6 +30,7 @@ import diarsid.jdbc.transactions.Row;
 import diarsid.jdbc.transactions.core.JdbcPreparedStatementSetter;
 import diarsid.jdbc.transactions.core.JdbcTransactionFactory;
 import diarsid.jdbc.transactions.core.JdbcTransactionGuard;
+import diarsid.jdbc.transactions.exceptions.TransactionHandledException;
 import diarsid.jdbc.transactions.exceptions.TransactionHandledSQLException;
 import diarsid.jdbc.transactions.exceptions.TransactionTerminationException;
 
@@ -644,6 +647,58 @@ public class JdbcTransactionTest {
         assertTrue(TEST_BASE.ifAllConnectionsReleased());
         
         assertEquals(row_1_label, s);
+    }
+    
+    @Test
+    public void directJdbcUsage() throws Exception {
+        List<String> results = new ArrayList<>();
+        createDisposableTransaction()
+                .useJdbcDirectly(
+                        (connection) -> {
+                            PreparedStatement ps = connection.prepareStatement(
+                                    "SELECT * FROM table_1 " +
+                                    "WHERE ( label LIKE ? ) AND ( id IS ? ) ");
+                            ps.setString(1, "%ame%");
+                            ps.setInt(2, 2);
+                            
+                            ResultSet rs = ps.executeQuery();
+                            while ( rs.next() ) {
+                                results.add(rs.getString("label"));
+                            }
+                        });
+        
+        assertEquals(1, results.size());
+        
+        assertTrue(TEST_BASE.ifAllConnectionsReleased());
+    }
+    
+    @Test
+    public void directJdbcUsage_use_forbidden_methods() throws Exception {
+        List<String> results = new ArrayList<>();
+        try {
+            createDisposableTransaction()
+                    .useJdbcDirectly(
+                            (connection) -> {
+                        connection.setAutoCommit(true); // here
+                        fail();
+                        PreparedStatement ps = connection.prepareStatement(
+                                          "SELECT * FROM table_1 " +
+                                          "WHERE ( label LIKE ? ) AND ( id IS ? ) ");
+                        ps.setString(1, "%ame%");
+                        ps.setInt(2, 2);
+                        
+                        ResultSet rs = ps.executeQuery();
+                        while ( rs.next() ) {
+                            results.add(rs.getString("label"));
+                        }
+                    });
+        } catch (TransactionHandledException transactionHandledException) {
+            // expected;
+        }
+        
+        assertEquals(0, results.size());
+        
+        assertTrue(TEST_BASE.ifAllConnectionsReleased());
     }
 
 }

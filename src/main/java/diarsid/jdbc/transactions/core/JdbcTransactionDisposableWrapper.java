@@ -11,11 +11,13 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import diarsid.jdbc.transactions.DirectJdbcOperation;
 import diarsid.jdbc.transactions.FirstRowConversion;
 import diarsid.jdbc.transactions.FirstRowOperation;
 import diarsid.jdbc.transactions.JdbcTransaction;
 import diarsid.jdbc.transactions.PerRowConversion;
 import diarsid.jdbc.transactions.PerRowOperation;
+import diarsid.jdbc.transactions.exceptions.TransactionHandledException;
 import diarsid.jdbc.transactions.exceptions.TransactionHandledSQLException;
 import diarsid.jdbc.transactions.exceptions.TransactionTerminationException;
 
@@ -191,6 +193,14 @@ class JdbcTransactionDisposableWrapper implements JdbcTransaction {
         Stream<T> stream = this.wrappedTransaction.doQueryAndStream(sql, conversion, type, params);
         this.commitTransactionAndMarkAsUsed();
         return stream;
+    }
+    
+    @Override
+    public void useJdbcDirectly(DirectJdbcOperation jdbcOperation) 
+            throws TransactionHandledException {
+        this.checkIfNotUsed();
+        this.wrappedTransaction.useJdbcDirectly(jdbcOperation);
+        this.commitTransactionAndMarkAsUsed();
     }
     
     @Override
