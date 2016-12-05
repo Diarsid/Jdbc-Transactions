@@ -277,7 +277,7 @@ Query methods for Java 8 Streams:
     } 
 ```
 Direct access to JDBC through the java.sql.Connection:
-java```
+```java
     try (JdbcTransaction transaction =              
                 factory.createTransaction()) {     
         
