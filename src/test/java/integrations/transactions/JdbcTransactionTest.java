@@ -173,7 +173,7 @@ public class JdbcTransactionTest {
             
             JdbcTransaction transaction = createTransaction();
             
-            int update = transaction.doUpdate(
+            int update = transaction.doUpdateVarargParams(
                 "DELETE FROM table_1 WHERE label IS ? ",
                 "name_2");
             
@@ -214,7 +214,7 @@ public class JdbcTransactionTest {
     @Test
     public void testDoQuery_3args_2() throws Exception {
         JdbcTransaction transaction = createTransaction();
-        transaction.doQuery("SELECT * FROM table_1 WHERE label LIKE ? ", 
+        transaction.doQueryVarargParams("SELECT * FROM table_1 WHERE label LIKE ? ", 
                 (row) -> {
                     this.printDataFromRow(row, "multiple rows processing:");
                 },
@@ -264,7 +264,7 @@ public class JdbcTransactionTest {
         assertEquals(3, qtyBefore);
         
         JdbcTransaction transaction = createTransaction();
-        transaction.doUpdate(
+        transaction.doUpdateVarargParams(
                 TABLE_1_INSERT, 
                 4, "name_4", 40, false);        
         transaction.commit();
@@ -281,7 +281,7 @@ public class JdbcTransactionTest {
         assertEquals(3, qtyBefore);
         
         JdbcTransaction transaction = createTransaction();
-        transaction.doUpdate(
+        transaction.doUpdateVarargParams(
                 TABLE_1_INSERT, 
                 4, "name_4", 40, false); 
         sleep(2000); 
@@ -304,18 +304,18 @@ public class JdbcTransactionTest {
         
         try {
             JdbcTransaction transaction = createTransaction();
-            transaction.doBatchUpdate(
+            transaction.doBatchUpdateVarargParams(
                     TABLE_1_INSERT,
                     params(4, "name_4", 40, false),
                     params(5, "name_5", 50, false),
                     params(6, "name_6", 60, false));            
             
-            transaction.doBatchUpdate(
+            transaction.doBatchUpdateVarargParams(
                     TABLE_1_INSERT,
                     params(7, "name_7", 740, false),
                     params(8, "name_8", 70, false));
             
-            transaction.doUpdate(
+            transaction.doUpdateVarargParams(
                     TABLE_1_INSERT,
                     8, "name_7", 70, false); // <- SQLException should rise due to primary key violation
             
@@ -350,7 +350,7 @@ public class JdbcTransactionTest {
         assertEquals(3, qtyBefore);
         
         JdbcTransaction transaction = createTransaction();
-        transaction.doBatchUpdate(
+        transaction.doBatchUpdateVarargParams(
                 TABLE_1_INSERT, 
                 params(4, "name_4", 40, false),
                 params(5, "name_5", 50, false),
@@ -372,7 +372,7 @@ public class JdbcTransactionTest {
         assertEquals(3, qtyBefore);
         
         JdbcTransaction transaction = createTransaction();
-        transaction.doBatchUpdate(
+        transaction.doBatchUpdateVarargParams(
                 TABLE_1_INSERT, 
                 params(4, "name_4", 40, false),
                 params(5, "name_5", 50, false),
@@ -383,7 +383,7 @@ public class JdbcTransactionTest {
         int qtyAfterRollback = TEST_BASE.countRowsInTable("table_1");
         assertEquals(3, qtyAfterRollback);
         
-        transaction.doBatchUpdate(
+        transaction.doBatchUpdateVarargParams(
                 TABLE_1_INSERT, 
                 params(4, "name_4", 40, false));
         transaction.commit();
@@ -402,14 +402,14 @@ public class JdbcTransactionTest {
         JdbcTransaction transaction = createTransaction();
         transaction
                 .ifTrue(false)
-                .doBatchUpdate(
+                .doBatchUpdateVarargParams(
                         TABLE_1_INSERT, 
                         params(4, "name_4", 40, false),
                         params(5, "name_5", 50, false));
                 
         transaction
                 .ifTrue(true)
-                .doBatchUpdate(
+                .doBatchUpdateVarargParams(
                         TABLE_1_INSERT, 
                         params(4, "name_4", 40, false),
                         params(5, "name_5", 50, false),
@@ -432,7 +432,7 @@ public class JdbcTransactionTest {
         transaction
                 .ifTrue(true)
                 .ifTrue(true)
-                .doBatchUpdate(
+                .doBatchUpdateVarargParams(
                         TABLE_1_INSERT, 
                         params(4, "name_4", 40, false),
                         params(5, "name_5", 50, false),
@@ -456,7 +456,7 @@ public class JdbcTransactionTest {
                 .ifTrue(true)
                 .ifTrue(false)
                 .ifTrue(true)
-                .doBatchUpdate(
+                .doBatchUpdateVarargParams(
                         TABLE_1_INSERT, 
                         params(4, "name_4", 40, false),
                         params(5, "name_5", 50, false),
@@ -477,7 +477,7 @@ public class JdbcTransactionTest {
         try (JdbcTransaction transaction = createTransaction()) {
             
             transaction
-                    .doBatchUpdate(
+                    .doBatchUpdateVarargParams(
                             TABLE_1_INSERT,
                             params(4, "name_4", 40, false),
                             params(5, "name_5", 50, false),
@@ -506,7 +506,7 @@ public class JdbcTransactionTest {
         assertEquals(3, qtyBefore);
         
         createDisposableTransaction()
-                .doBatchUpdate(
+                .doBatchUpdateVarargParams(
                         TABLE_1_INSERT, 
                         params(4, "name_4", 40, false),
                         params(5, "name_5", 50, false),
@@ -525,7 +525,7 @@ public class JdbcTransactionTest {
         
         createDisposableTransaction()
                 .ifTrue( qtyBefore > 0 )
-                .doBatchUpdate(
+                .doBatchUpdateVarargParams(
                         TABLE_1_INSERT, 
                         params(4, "name_4", 40, false),
                         params(5, "name_5", 50, false),
@@ -545,7 +545,7 @@ public class JdbcTransactionTest {
         createDisposableTransaction()
                 .ifTrue( qtyBefore > 0 )
                 .ifTrue( true )
-                .doBatchUpdate(
+                .doBatchUpdateVarargParams(
                         TABLE_1_INSERT, 
                         params(4, "name_4", 40, false),
                         params(5, "name_5", 50, false),
@@ -564,7 +564,7 @@ public class JdbcTransactionTest {
         
         createDisposableTransaction()
                 .ifTrue( false )
-                .doBatchUpdate(
+                .doBatchUpdateVarargParams(
                         TABLE_1_INSERT, 
                         params(4, "name_4", 40, false),
                         params(5, "name_5", 50, false),
@@ -600,6 +600,30 @@ public class JdbcTransactionTest {
     }
     
     @Test
+    public void streamedQueryTest_vararg() throws Exception {
+        
+        int qty = TEST_BASE.countRowsInTable("table_1");
+        assertEquals(3, qty);
+        
+        List<String> list = createDisposableTransaction()
+                .doQueryAndStreamVarargParams(
+                        "SELECT * " +
+                        "FROM table_1 " +
+                        "WHERE ( label LIKE ? ) AND ( label LIKE ? )", 
+                        (row) -> {
+                            return (int) row.get("index");
+                        },
+                        int.class,
+                        "%m%", "%na%")
+                .map(i -> String.valueOf(i) + ": index")
+                .collect(toList());
+        
+        assertEquals(3, list.size());
+        
+        assertTrue(TEST_BASE.ifAllConnectionsReleased());
+    }
+    
+    @Test
     public void disposableConditionalTransactionTest_ifTrue_stacked_with_false() throws Exception {
         int qtyBefore = TEST_BASE.countRowsInTable("table_1");
         assertEquals(3, qtyBefore);
@@ -608,7 +632,7 @@ public class JdbcTransactionTest {
                 .ifTrue( true )
                 .ifTrue( false )
                 .ifTrue( true )
-                .doBatchUpdate(
+                .doBatchUpdateVarargParams(
                         TABLE_1_INSERT, 
                         params(4, "name_4", 40, false),
                         params(5, "name_5", 50, false),

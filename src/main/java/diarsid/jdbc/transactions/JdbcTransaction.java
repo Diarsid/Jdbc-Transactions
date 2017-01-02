@@ -24,40 +24,52 @@ public interface JdbcTransaction extends AutoCloseable {
     @Override
     void close();
     
-    boolean doesQueryHaveResults(String sql) 
+    boolean doesQueryHaveResults(
+            String sql) 
             throws TransactionHandledSQLException;
     
-    boolean doesQueryHaveResults(String sql, Object... params) 
+    boolean doesQueryHaveResultsVarargParams(
+            String sql, Object... params) 
             throws TransactionHandledSQLException;
     
-    boolean doesQueryHaveResults(String sql, List<Object> params) 
+    boolean doesQueryHaveResults(
+            String sql, List<? extends Object> params) 
             throws TransactionHandledSQLException;
     
-    boolean doesQueryHaveResults(String sql, Params params) 
+    boolean doesQueryHaveResults(
+            String sql, Params params) 
             throws TransactionHandledSQLException;
     
-    int countQueryResults(String sql) 
+    int countQueryResults(
+            String sql) 
             throws TransactionHandledSQLException;
     
-    int countQueryResults(String sql, Object... params) 
+    int countQueryResultsVarargParams(
+            String sql, Object... params) 
             throws TransactionHandledSQLException;
     
-    int countQueryResults(String sql, List<Object> params) 
+    int countQueryResults(
+            String sql, List<? extends Object> params) 
             throws TransactionHandledSQLException;
     
-    int countQueryResults(String sql, Params params) 
+    int countQueryResults(
+            String sql, Params params) 
             throws TransactionHandledSQLException;
     
-    void doQuery(String sql, PerRowOperation operation, Object... params) 
+    void doQuery(
+            String sql, PerRowOperation operation) 
             throws TransactionHandledSQLException;
     
-    void doQuery(String sql, PerRowOperation operation, List<Object> params) 
+    void doQuery(
+            String sql, PerRowOperation operation, List<? extends Object> params) 
             throws TransactionHandledSQLException;
     
-    void doQuery(String sql, PerRowOperation operation, Params params) 
+    void doQuery(
+            String sql, PerRowOperation operation, Params params) 
             throws TransactionHandledSQLException;
     
-    void doQuery(String sql, PerRowOperation operation) 
+    void doQueryVarargParams(
+            String sql, PerRowOperation operation, Object... params) 
             throws TransactionHandledSQLException;
     
     void useJdbcDirectly(DirectJdbcOperation jdbcOperation) 
@@ -68,61 +80,71 @@ public interface JdbcTransaction extends AutoCloseable {
             throws TransactionHandledSQLException;
     
     <T> Stream<T> doQueryAndStream(
-            String sql, PerRowConversion<T> conversion, Class<T> type, Object... params) 
-            throws TransactionHandledSQLException;
-    
-    <T> Stream<T> doQueryAndStream(
-            String sql, PerRowConversion<T> conversion, Class<T> type, List<Object> params) 
+            String sql, PerRowConversion<T> conversion, Class<T> type, List<? extends Object> params) 
             throws TransactionHandledSQLException;
     
     <T> Stream<T> doQueryAndStream(
             String sql, PerRowConversion<T> conversion, Class<T> type, Params params) 
             throws TransactionHandledSQLException;
     
-    void doQueryAndProcessFirstRow(String sql, FirstRowOperation operation) 
+    <T> Stream<T> doQueryAndStreamVarargParams(
+            String sql, PerRowConversion<T> conversion, Class<T> type, Object... params) 
+            throws TransactionHandledSQLException;
+        
+    void doQueryAndProcessFirstRow(
+            String sql, FirstRowOperation operation) 
             throws TransactionHandledSQLException;
     
-    void doQueryAndProcessFirstRow(String sql, FirstRowOperation operation, Object... params) 
+    void doQueryAndProcessFirstRowVarargParams(
+            String sql, FirstRowOperation operation, Object... params) 
             throws TransactionHandledSQLException;
     
-    void doQueryAndProcessFirstRow(String sql, FirstRowOperation operation, List<Object> params) 
+    void doQueryAndProcessFirstRow(
+            String sql, FirstRowOperation operation, List<? extends Object> params) 
             throws TransactionHandledSQLException;
     
-    void doQueryAndProcessFirstRow(String sql, FirstRowOperation operation, Params params) 
+    void doQueryAndProcessFirstRow(
+            String sql, FirstRowOperation operation, Params params) 
             throws TransactionHandledSQLException;
     
     Optional<Object> doQueryAndConvertFirstRow(
             String sql, FirstRowConversion conversion) 
             throws TransactionHandledSQLException;
     
-    Optional<Object> doQueryAndConvertFirstRow(
+    Optional<Object> doQueryAndConvertFirstRowVarargParams(
             String sql, FirstRowConversion conversion, Object... params) 
             throws TransactionHandledSQLException;
     
     Optional<Object> doQueryAndConvertFirstRow(
-            String sql, FirstRowConversion conversion, List<Object> params) 
+            String sql, FirstRowConversion conversion, List<? extends Object> params) 
             throws TransactionHandledSQLException;
     
     Optional<Object> doQueryAndConvertFirstRow(
             String sql, FirstRowConversion conversion, Params params) 
             throws TransactionHandledSQLException;
     
-    int doUpdate(String updateSql) 
+    int doUpdate(
+            String updateSql) 
             throws TransactionHandledSQLException;
     
-    int doUpdate(String updateSql, Params params) 
+    int doUpdate(
+            String updateSql, Params params) 
             throws TransactionHandledSQLException;
     
-    int doUpdate(String updateSql, Object... params) 
+    int doUpdateVarargParams(
+            String updateSql, Object... params) 
             throws TransactionHandledSQLException;
     
-    int doUpdate(String updateSql, List<Object> params) 
+    int doUpdate(
+            String updateSql, List<? extends Object> params) 
             throws TransactionHandledSQLException;
     
-    int[] doBatchUpdate(String updateSql, Set<Params> batchParams) 
+    int[] doBatchUpdate(
+            String updateSql, Set<Params> batchParams) 
             throws TransactionHandledSQLException;
     
-    int[] doBatchUpdate(String updateSql, Params... batchParams) 
+    int[] doBatchUpdateVarargParams(
+            String updateSql, Params... batchParams) 
             throws TransactionHandledSQLException;
             
     void commit() 

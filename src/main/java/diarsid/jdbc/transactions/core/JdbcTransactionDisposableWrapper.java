@@ -62,16 +62,16 @@ class JdbcTransactionDisposableWrapper implements JdbcTransaction {
     }
 
     @Override
-    public boolean doesQueryHaveResults(String sql, Object... params) 
+    public boolean doesQueryHaveResultsVarargParams(String sql, Object... params) 
             throws TransactionHandledSQLException {
         this.checkIfNotUsed();
-        boolean result = this.wrappedTransaction.doesQueryHaveResults(sql, params);
+        boolean result = this.wrappedTransaction.doesQueryHaveResultsVarargParams(sql, params);
         this.commitTransactionAndMarkAsUsed();
         return result;
     }
 
     @Override
-    public boolean doesQueryHaveResults(String sql, List<Object> params) 
+    public boolean doesQueryHaveResults(String sql, List<? extends Object> params) 
             throws TransactionHandledSQLException {
         this.checkIfNotUsed();
         boolean result = this.wrappedTransaction.doesQueryHaveResults(sql, params);
@@ -98,16 +98,16 @@ class JdbcTransactionDisposableWrapper implements JdbcTransaction {
     }
 
     @Override
-    public int countQueryResults(String sql, Object... params) 
+    public int countQueryResultsVarargParams(String sql, Object... params) 
             throws TransactionHandledSQLException {
         this.checkIfNotUsed();
-        int result = this.wrappedTransaction.countQueryResults(sql, params);
+        int result = this.wrappedTransaction.countQueryResultsVarargParams(sql, params);
         this.commitTransactionAndMarkAsUsed();
         return result;
     }
 
     @Override
-    public int countQueryResults(String sql, List<Object> params) 
+    public int countQueryResults(String sql, List<? extends Object> params) 
             throws TransactionHandledSQLException {
         this.checkIfNotUsed();
         int result = this.wrappedTransaction.countQueryResults(sql, params);
@@ -124,15 +124,15 @@ class JdbcTransactionDisposableWrapper implements JdbcTransaction {
     }
 
     @Override
-    public void doQuery(String sql, PerRowOperation operation, Object... params) 
+    public void doQueryVarargParams(String sql, PerRowOperation operation, Object... params) 
             throws TransactionHandledSQLException {
         this.checkIfNotUsed();
-        this.wrappedTransaction.doQuery(sql, operation, params);
+        this.wrappedTransaction.doQueryVarargParams(sql, operation, params);
         this.commitTransactionAndMarkAsUsed();
     }
 
     @Override
-    public void doQuery(String sql, PerRowOperation operation, List<Object> params) 
+    public void doQuery(String sql, PerRowOperation operation, List<? extends Object> params) 
             throws TransactionHandledSQLException {
         this.checkIfNotUsed();
         this.wrappedTransaction.doQuery(sql, operation, params);
@@ -166,18 +166,18 @@ class JdbcTransactionDisposableWrapper implements JdbcTransaction {
     }
     
     @Override
-    public <T> Stream<T> doQueryAndStream(
+    public <T> Stream<T> doQueryAndStreamVarargParams(
             String sql, PerRowConversion<T> conversion, Class<T> type, Object... params) 
             throws TransactionHandledSQLException {
         this.checkIfNotUsed();
-        Stream<T> stream = this.wrappedTransaction.doQueryAndStream(sql, conversion, type, params);
+        Stream<T> stream = this.wrappedTransaction.doQueryAndStreamVarargParams(sql, conversion, type, params);
         this.commitTransactionAndMarkAsUsed();
         return stream;
     }
     
     @Override
     public <T> Stream<T> doQueryAndStream(
-            String sql, PerRowConversion<T> conversion, Class<T> type, List<Object> params) 
+            String sql, PerRowConversion<T> conversion, Class<T> type, List<? extends Object> params) 
             throws TransactionHandledSQLException {
         this.checkIfNotUsed();
         Stream<T> stream = this.wrappedTransaction.doQueryAndStream(sql, conversion, type, params);
@@ -213,17 +213,17 @@ class JdbcTransactionDisposableWrapper implements JdbcTransaction {
     }
     
     @Override
-    public void doQueryAndProcessFirstRow(
+    public void doQueryAndProcessFirstRowVarargParams(
             String sql, FirstRowOperation operation, Object... params) 
             throws TransactionHandledSQLException {
         this.checkIfNotUsed();
-        this.wrappedTransaction.doQueryAndProcessFirstRow(sql, operation, params);
+        this.wrappedTransaction.doQueryAndProcessFirstRowVarargParams(sql, operation, params);
         this.commitTransactionAndMarkAsUsed();
     }
     
     @Override
     public void doQueryAndProcessFirstRow(
-            String sql, FirstRowOperation operation, List<Object> params) 
+            String sql, FirstRowOperation operation, List<? extends Object> params) 
             throws TransactionHandledSQLException {
         this.checkIfNotUsed();
         this.wrappedTransaction.doQueryAndProcessFirstRow(sql, operation, params);
@@ -251,19 +251,19 @@ class JdbcTransactionDisposableWrapper implements JdbcTransaction {
     }
     
     @Override
-    public Optional<Object> doQueryAndConvertFirstRow(
+    public Optional<Object> doQueryAndConvertFirstRowVarargParams(
             String sql, FirstRowConversion conversion, Object... params) 
             throws TransactionHandledSQLException {
         this.checkIfNotUsed();
         Optional<Object> opt = this.wrappedTransaction
-                .doQueryAndConvertFirstRow(sql, conversion, params);
+                .doQueryAndConvertFirstRowVarargParams(sql, conversion, params);
         this.commitTransactionAndMarkAsUsed();
         return opt;
     }
     
     @Override
     public Optional<Object> doQueryAndConvertFirstRow(
-            String sql, FirstRowConversion conversion, List<Object> params) 
+            String sql, FirstRowConversion conversion, List<? extends Object> params) 
             throws TransactionHandledSQLException {
         this.checkIfNotUsed();
         Optional<Object> opt = this.wrappedTransaction
@@ -301,16 +301,16 @@ class JdbcTransactionDisposableWrapper implements JdbcTransaction {
     }
 
     @Override
-    public int doUpdate(String updateSql, Object... params) 
+    public int doUpdateVarargParams(String updateSql, Object... params) 
             throws TransactionHandledSQLException {
         this.checkIfNotUsed();
-        int result = this.wrappedTransaction.doUpdate(updateSql, params);
+        int result = this.wrappedTransaction.doUpdateVarargParams(updateSql, params);
         this.commitTransactionAndMarkAsUsed();
         return result;
     }
 
     @Override
-    public int doUpdate(String updateSql, List<Object> params) 
+    public int doUpdate(String updateSql, List<? extends Object> params) 
             throws TransactionHandledSQLException {
         this.checkIfNotUsed();
         int result = this.wrappedTransaction.doUpdate(updateSql, params);
@@ -328,10 +328,10 @@ class JdbcTransactionDisposableWrapper implements JdbcTransaction {
     }
 
     @Override
-    public int[] doBatchUpdate(String updateSql, Params... batchParams) 
+    public int[] doBatchUpdateVarargParams(String updateSql, Params... batchParams) 
             throws TransactionHandledSQLException {
         this.checkIfNotUsed();
-        int[] result = this.wrappedTransaction.doBatchUpdate(updateSql, batchParams);
+        int[] result = this.wrappedTransaction.doBatchUpdateVarargParams(updateSql, batchParams);
         this.commitTransactionAndMarkAsUsed();
         return result;
     }

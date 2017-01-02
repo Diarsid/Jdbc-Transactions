@@ -72,7 +72,7 @@ class JdbcTransactionStub implements JdbcTransaction {
     }
 
     @Override
-    public int[] doBatchUpdate(String updateSql, Params... batchParams) 
+    public int[] doBatchUpdateVarargParams(String updateSql, Params... batchParams) 
             throws TransactionHandledSQLException {
         return this.operationNotPerformedIntArrayValue();
     }
@@ -93,13 +93,13 @@ class JdbcTransactionStub implements JdbcTransaction {
     }
     
     @Override
-    public boolean doesQueryHaveResults(String sql, Object... params) 
+    public boolean doesQueryHaveResultsVarargParams(String sql, Object... params) 
             throws TransactionHandledSQLException {
         return this.operationNotPerformedBooleanValue();
     }
 
     @Override
-    public boolean doesQueryHaveResults(String sql, List<Object> params) 
+    public boolean doesQueryHaveResults(String sql, List<? extends Object> params) 
             throws TransactionHandledSQLException {
         return this.operationNotPerformedBooleanValue();
     }
@@ -116,13 +116,13 @@ class JdbcTransactionStub implements JdbcTransaction {
     }
 
     @Override
-    public int countQueryResults(String sql, Object... params) 
+    public int countQueryResultsVarargParams(String sql, Object... params) 
             throws TransactionHandledSQLException {
         return this.operationNotPerformedIntValue();
     }
 
     @Override
-    public int countQueryResults(String sql, List<Object> params) 
+    public int countQueryResults(String sql, List<? extends Object> params) 
             throws TransactionHandledSQLException {
         return this.operationNotPerformedIntValue();
     }
@@ -134,13 +134,13 @@ class JdbcTransactionStub implements JdbcTransaction {
     }
 
     @Override
-    public void doQuery(String sql, PerRowOperation operation, Object... params) 
+    public void doQueryVarargParams(String sql, PerRowOperation operation, Object... params) 
             throws TransactionHandledSQLException {
         // do nothing;
     }
 
     @Override
-    public void doQuery(String sql, PerRowOperation operation, List<Object> params) 
+    public void doQuery(String sql, PerRowOperation operation, List<? extends Object> params) 
             throws TransactionHandledSQLException {
         // do nothing; 
     }
@@ -159,7 +159,7 @@ class JdbcTransactionStub implements JdbcTransaction {
     }
     
     @Override
-    public <T> Stream<T> doQueryAndStream(
+    public <T> Stream<T> doQueryAndStreamVarargParams(
             String sql, PerRowConversion<T> conversion, Class<T> type, Object... params) 
             throws TransactionHandledSQLException {
         return this.operationNotPerformedEmptyStream(type);
@@ -167,7 +167,7 @@ class JdbcTransactionStub implements JdbcTransaction {
     
     @Override
     public <T> Stream<T> doQueryAndStream(
-            String sql, PerRowConversion<T> conversion, Class<T> type, List<Object> params) 
+            String sql, PerRowConversion<T> conversion, Class<T> type, List<? extends Object> params) 
             throws TransactionHandledSQLException {
         return this.operationNotPerformedEmptyStream(type);
     }
@@ -186,7 +186,7 @@ class JdbcTransactionStub implements JdbcTransaction {
     }
     
     @Override
-    public void doQueryAndProcessFirstRow(
+    public void doQueryAndProcessFirstRowVarargParams(
             String sql, FirstRowOperation operation, Object... params) 
             throws TransactionHandledSQLException {
         // do nothing; 
@@ -194,7 +194,7 @@ class JdbcTransactionStub implements JdbcTransaction {
     
     @Override
     public void doQueryAndProcessFirstRow(
-            String sql, FirstRowOperation operation, List<Object> params) 
+            String sql, FirstRowOperation operation, List<? extends Object> params) 
             throws TransactionHandledSQLException {
         // do nothing; 
     }
@@ -220,7 +220,7 @@ class JdbcTransactionStub implements JdbcTransaction {
     }
     
     @Override
-    public Optional<Object> doQueryAndConvertFirstRow(
+    public Optional<Object> doQueryAndConvertFirstRowVarargParams(
             String sql, FirstRowConversion conversion, Object... params) 
             throws TransactionHandledSQLException {
         return this.operationNotPerformedOptionalValue();
@@ -228,7 +228,7 @@ class JdbcTransactionStub implements JdbcTransaction {
     
     @Override
     public Optional<Object> doQueryAndConvertFirstRow(
-            String sql, FirstRowConversion conversion, List<Object> params) 
+            String sql, FirstRowConversion conversion, List<? extends Object> params) 
             throws TransactionHandledSQLException {
         return this.operationNotPerformedOptionalValue();
     }
@@ -259,13 +259,13 @@ class JdbcTransactionStub implements JdbcTransaction {
     }
 
     @Override
-    public int doUpdate(String updateSql, Object... params) 
+    public int doUpdateVarargParams(String updateSql, Object... params) 
             throws TransactionHandledSQLException {
         return this.operationNotPerformedIntValue();
     }
 
     @Override
-    public int doUpdate(String updateSql, List<Object> params) 
+    public int doUpdate(String updateSql, List<? extends Object> params) 
             throws TransactionHandledSQLException {
         return this.operationNotPerformedIntValue();
     }
