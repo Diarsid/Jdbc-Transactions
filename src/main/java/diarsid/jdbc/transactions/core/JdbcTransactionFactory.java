@@ -66,4 +66,10 @@ public class JdbcTransactionFactory {
         return new JdbcTransactionWrapper(
                 connection, connectionTearDown, this.argsSetter, sqlHistoryRecorder);
     }    
+    
+    public void close() {
+        this.transactionGuard.stop();
+        this.connectionsSource.closeSource();
+        logger.info("closed.");
+    }
 }

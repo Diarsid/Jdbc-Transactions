@@ -29,4 +29,9 @@ public class JdbcConnectionsSourceTestBase implements JdbcConnectionsSource {
     public Connection getConnection() throws SQLException {
         return this.embeddedBase.getConnection();
     }
+
+    @Override
+    public void closeSource() {
+        
+    }
 }

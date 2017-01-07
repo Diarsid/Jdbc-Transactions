@@ -74,4 +74,9 @@ public class JdbcTransactionGuard {
             }
         };
     }
+    
+    void stop() {
+        this.scheduler.shutdown();
+        logger.info("stopped.");
+    }
 }

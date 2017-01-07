@@ -15,4 +15,6 @@ import java.sql.SQLException;
 public interface JdbcConnectionsSource {
     
     Connection getConnection() throws SQLException;
+    
+    void closeSource();
 }
