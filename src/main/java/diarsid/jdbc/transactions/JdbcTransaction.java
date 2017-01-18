@@ -76,19 +76,19 @@ public interface JdbcTransaction extends AutoCloseable {
             throws TransactionHandledException;
     
     <T> Stream<T> doQueryAndStream(
-            String sql, PerRowConversion<T> conversion, Class<T> type) 
+            Class<T> type, String sql, PerRowConversion<T> conversion) 
             throws TransactionHandledSQLException;
     
     <T> Stream<T> doQueryAndStream(
-            String sql, PerRowConversion<T> conversion, Class<T> type, List<? extends Object> params) 
+            Class<T> type, String sql, PerRowConversion<T> conversion, List<? extends Object> params) 
             throws TransactionHandledSQLException;
     
     <T> Stream<T> doQueryAndStream(
-            String sql, PerRowConversion<T> conversion, Class<T> type, Params params) 
+            Class<T> type, String sql, PerRowConversion<T> conversion, Params params) 
             throws TransactionHandledSQLException;
     
     <T> Stream<T> doQueryAndStreamVarargParams(
-            String sql, PerRowConversion<T> conversion, Class<T> type, Object... params) 
+            Class<T> type, String sql, PerRowConversion<T> conversion, Object... params) 
             throws TransactionHandledSQLException;
         
     void doQueryAndProcessFirstRow(
@@ -107,20 +107,20 @@ public interface JdbcTransaction extends AutoCloseable {
             String sql, FirstRowOperation operation, Params params) 
             throws TransactionHandledSQLException;
     
-    Optional<Object> doQueryAndConvertFirstRow(
-            String sql, FirstRowConversion conversion) 
+    <T> Optional<T> doQueryAndConvertFirstRow(
+            Class<T> type, String sql, FirstRowConversion conversion) 
             throws TransactionHandledSQLException;
     
-    Optional<Object> doQueryAndConvertFirstRowVarargParams(
-            String sql, FirstRowConversion conversion, Object... params) 
+    <T> Optional<T> doQueryAndConvertFirstRowVarargParams(
+            Class<T> type, String sql, FirstRowConversion conversion, Object... params) 
             throws TransactionHandledSQLException;
     
-    Optional<Object> doQueryAndConvertFirstRow(
-            String sql, FirstRowConversion conversion, List<? extends Object> params) 
+    <T> Optional<T> doQueryAndConvertFirstRow(
+            Class<T> type, String sql, FirstRowConversion conversion, List<? extends Object> params) 
             throws TransactionHandledSQLException;
     
-    Optional<Object> doQueryAndConvertFirstRow(
-            String sql, FirstRowConversion conversion, Params params) 
+    <T> Optional<T> doQueryAndConvertFirstRow(
+            Class<T> type, String sql, FirstRowConversion conversion, Params params) 
             throws TransactionHandledSQLException;
     
     int doUpdate(

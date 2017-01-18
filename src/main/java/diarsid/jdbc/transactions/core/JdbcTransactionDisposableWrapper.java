@@ -160,40 +160,41 @@ class JdbcTransactionDisposableWrapper implements JdbcTransaction {
     
     @Override
     public <T> Stream<T> doQueryAndStream(
-            String sql, PerRowConversion<T> conversion, Class<T> type) 
+            Class<T> type, String sql, PerRowConversion<T> conversion) 
             throws TransactionHandledSQLException {
         this.checkIfNotUsed();
-        Stream<T> stream = this.wrappedTransaction.doQueryAndStream(sql, conversion, type);
+        Stream<T> stream = this.wrappedTransaction.doQueryAndStream(type, sql, conversion);
         this.commitTransactionAndMarkAsUsed();
         return stream;
     }
     
     @Override
     public <T> Stream<T> doQueryAndStreamVarargParams(
-            String sql, PerRowConversion<T> conversion, Class<T> type, Object... params) 
+            Class<T> type, String sql, PerRowConversion<T> conversion, Object... params) 
             throws TransactionHandledSQLException {
         this.checkIfNotUsed();
-        Stream<T> stream = this.wrappedTransaction.doQueryAndStreamVarargParams(sql, conversion, type, params);
+        Stream<T> stream = this.wrappedTransaction
+                .doQueryAndStreamVarargParams(type, sql, conversion, params);
         this.commitTransactionAndMarkAsUsed();
         return stream;
     }
     
     @Override
     public <T> Stream<T> doQueryAndStream(
-            String sql, PerRowConversion<T> conversion, Class<T> type, List<? extends Object> params) 
+            Class<T> type, String sql, PerRowConversion<T> conversion, List<? extends Object> params) 
             throws TransactionHandledSQLException {
         this.checkIfNotUsed();
-        Stream<T> stream = this.wrappedTransaction.doQueryAndStream(sql, conversion, type, params);
+        Stream<T> stream = this.wrappedTransaction.doQueryAndStream(type, sql, conversion, params);
         this.commitTransactionAndMarkAsUsed();
         return stream;
     }
     
     @Override
     public <T> Stream<T> doQueryAndStream(
-            String sql, PerRowConversion<T> conversion, Class<T> type, Params params) 
+            Class<T> type, String sql, PerRowConversion<T> conversion, Params params) 
             throws TransactionHandledSQLException {
         this.checkIfNotUsed();
-        Stream<T> stream = this.wrappedTransaction.doQueryAndStream(sql, conversion, type, params);
+        Stream<T> stream = this.wrappedTransaction.doQueryAndStream(type, sql, conversion, params);
         this.commitTransactionAndMarkAsUsed();
         return stream;
     }
@@ -243,45 +244,45 @@ class JdbcTransactionDisposableWrapper implements JdbcTransaction {
     };
     
     @Override
-    public Optional<Object> doQueryAndConvertFirstRow(
-            String sql, FirstRowConversion conversion) 
+    public <T> Optional<T> doQueryAndConvertFirstRow(
+            Class<T> type, String sql, FirstRowConversion conversion) 
             throws TransactionHandledSQLException {
         this.checkIfNotUsed();
-        Optional<Object> opt = this.wrappedTransaction
-                .doQueryAndConvertFirstRow(sql, conversion);
+        Optional<T> opt = this.wrappedTransaction
+                .doQueryAndConvertFirstRow(type, sql, conversion);
         this.commitTransactionAndMarkAsUsed();
         return opt;
     }
     
     @Override
-    public Optional<Object> doQueryAndConvertFirstRowVarargParams(
-            String sql, FirstRowConversion conversion, Object... params) 
+    public <T> Optional<T> doQueryAndConvertFirstRowVarargParams(
+            Class<T> type, String sql, FirstRowConversion conversion, Object... params) 
             throws TransactionHandledSQLException {
         this.checkIfNotUsed();
-        Optional<Object> opt = this.wrappedTransaction
-                .doQueryAndConvertFirstRowVarargParams(sql, conversion, params);
+        Optional<T> opt = this.wrappedTransaction
+                .doQueryAndConvertFirstRowVarargParams(type, sql, conversion, params);
         this.commitTransactionAndMarkAsUsed();
         return opt;
     }
     
     @Override
-    public Optional<Object> doQueryAndConvertFirstRow(
-            String sql, FirstRowConversion conversion, List<? extends Object> params) 
+    public <T> Optional<T> doQueryAndConvertFirstRow(
+            Class<T> type, String sql, FirstRowConversion conversion, List<? extends Object> params) 
             throws TransactionHandledSQLException {
         this.checkIfNotUsed();
-        Optional<Object> opt = this.wrappedTransaction
-                .doQueryAndConvertFirstRow(sql, conversion, params);
+        Optional<T> opt = this.wrappedTransaction
+                .doQueryAndConvertFirstRow(type, sql, conversion, params);
         this.commitTransactionAndMarkAsUsed();
         return opt;
     }
     
     @Override
-    public Optional<Object> doQueryAndConvertFirstRow(
-            String sql, FirstRowConversion conversion, Params params) 
+    public <T> Optional<T> doQueryAndConvertFirstRow(
+            Class<T> type, String sql, FirstRowConversion conversion, Params params) 
             throws TransactionHandledSQLException {
         this.checkIfNotUsed();
-        Optional<Object> opt = this.wrappedTransaction
-                .doQueryAndConvertFirstRow(sql, conversion, params);
+        Optional<T> opt = this.wrappedTransaction
+                .doQueryAndConvertFirstRow(type, sql, conversion, params);
         this.commitTransactionAndMarkAsUsed();
         return opt;
     }

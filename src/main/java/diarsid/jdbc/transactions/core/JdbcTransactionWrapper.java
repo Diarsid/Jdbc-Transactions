@@ -316,7 +316,7 @@ class JdbcTransactionWrapper implements JdbcTransaction {
     
     @Override
     public <T> Stream<T> doQueryAndStream(
-            String sql, PerRowConversion<T> conversion, Class<T> type) 
+            Class<T> type, String sql, PerRowConversion<T> conversion) 
             throws TransactionHandledSQLException {
         this.sqlHistory.add(sql);
         try {
@@ -341,7 +341,7 @@ class JdbcTransactionWrapper implements JdbcTransaction {
     
     @Override
     public <T> Stream<T> doQueryAndStreamVarargParams(
-            String sql, PerRowConversion<T> conversion, Class<T> type, Object... params) 
+            Class<T> type, String sql, PerRowConversion<T> conversion, Object... params) 
             throws TransactionHandledSQLException {
         this.sqlHistory.add(sql, params);
         try {
@@ -368,16 +368,16 @@ class JdbcTransactionWrapper implements JdbcTransaction {
     
     @Override
     public <T> Stream<T> doQueryAndStream(
-            String sql, PerRowConversion<T> conversion, Class<T> type, List<? extends Object> params) 
+            Class<T> type, String sql, PerRowConversion<T> conversion, List<? extends Object> params) 
             throws TransactionHandledSQLException {
-        return this.doQueryAndStreamVarargParams(sql, conversion, type, params.toArray());
+        return this.doQueryAndStreamVarargParams(type, sql, conversion, params.toArray());
     }
     
     @Override
     public <T> Stream<T> doQueryAndStream(
-            String sql, PerRowConversion<T> conversion, Class<T> type, Params params) 
+            Class<T> type, String sql, PerRowConversion<T> conversion, Params params) 
             throws TransactionHandledSQLException {
-        return this.doQueryAndStreamVarargParams(sql, conversion, type, params.get());
+        return this.doQueryAndStreamVarargParams(type, sql, conversion, params.get());
     }
     
     @Override
@@ -468,14 +468,14 @@ class JdbcTransactionWrapper implements JdbcTransaction {
     }
     
     @Override
-    public Optional<Object> doQueryAndConvertFirstRow(
-            String sql, FirstRowConversion conversion) 
+    public <T> Optional<T> doQueryAndConvertFirstRow(
+            Class<T> type, String sql, FirstRowConversion conversion) 
             throws TransactionHandledSQLException {
         this.sqlHistory.add(sql);
         try {
             Statement st = this.connection.createStatement();
             ResultSet rs = st.executeQuery(sql);
-            Optional<Object> optional;
+            Optional<T> optional;
             if ( rs.first() ) {
                 optional = conversion.convert(this.wrapResultSetIntoRow(rs));
             } else {
@@ -494,15 +494,15 @@ class JdbcTransactionWrapper implements JdbcTransaction {
     }
     
     @Override
-    public Optional<Object> doQueryAndConvertFirstRowVarargParams(
-            String sql, FirstRowConversion conversion, Object... params) 
+    public <T> Optional<T> doQueryAndConvertFirstRowVarargParams(
+            Class<T> type, String sql, FirstRowConversion conversion, Object... params) 
             throws TransactionHandledSQLException {
         this.sqlHistory.add(sql, params);
         try {
             PreparedStatement ps = this.connection.prepareStatement(sql);
             this.paramsSetter.setParameters(ps, params);
             ResultSet rs = ps.executeQuery();
-            Optional<Object> optional;
+            Optional<T> optional;
             if ( rs.first() ) {
                 optional = conversion.convert(this.wrapResultSetIntoRow(rs));
             } else {
@@ -521,17 +521,17 @@ class JdbcTransactionWrapper implements JdbcTransaction {
     }
     
     @Override
-    public Optional<Object> doQueryAndConvertFirstRow(
-            String sql, FirstRowConversion conversion, List<? extends Object> params) 
+    public <T> Optional<T> doQueryAndConvertFirstRow(
+            Class<T> type, String sql, FirstRowConversion conversion, List<? extends Object> params) 
             throws TransactionHandledSQLException {
-        return this.doQueryAndConvertFirstRowVarargParams(sql, conversion, params.toArray());
+        return this.doQueryAndConvertFirstRowVarargParams(type, sql, conversion, params.toArray());
     }
     
     @Override
-    public Optional<Object> doQueryAndConvertFirstRow(
-            String sql, FirstRowConversion conversion, Params params) 
+    public <T> Optional<T> doQueryAndConvertFirstRow(
+            Class<T> type, String sql, FirstRowConversion conversion, Params params) 
             throws TransactionHandledSQLException {
-        return this.doQueryAndConvertFirstRowVarargParams(sql, conversion, params.get());
+        return this.doQueryAndConvertFirstRowVarargParams(type, sql, conversion, params.get());
     }
     
     @Override

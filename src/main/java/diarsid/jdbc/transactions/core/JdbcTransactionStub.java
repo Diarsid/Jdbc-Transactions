@@ -46,7 +46,7 @@ class JdbcTransactionStub implements JdbcTransaction {
         return "";
     }
     
-    private Optional<Object> operationNotPerformedOptionalValue() {
+    private <T> Optional<T> operationNotPerformedOptionalValue(Class<T> type) {
         return Optional.empty();
     }    
     
@@ -153,28 +153,28 @@ class JdbcTransactionStub implements JdbcTransaction {
     
     @Override
     public <T> Stream<T> doQueryAndStream(
-            String sql, PerRowConversion<T> conversion, Class<T> type) 
+            Class<T> type, String sql, PerRowConversion<T> conversion) 
             throws TransactionHandledSQLException {
         return this.operationNotPerformedEmptyStream(type);
     }
     
     @Override
     public <T> Stream<T> doQueryAndStreamVarargParams(
-            String sql, PerRowConversion<T> conversion, Class<T> type, Object... params) 
+            Class<T> type, String sql, PerRowConversion<T> conversion, Object... params) 
             throws TransactionHandledSQLException {
         return this.operationNotPerformedEmptyStream(type);
     }
     
     @Override
     public <T> Stream<T> doQueryAndStream(
-            String sql, PerRowConversion<T> conversion, Class<T> type, List<? extends Object> params) 
+            Class<T> type, String sql, PerRowConversion<T> conversion, List<? extends Object> params) 
             throws TransactionHandledSQLException {
         return this.operationNotPerformedEmptyStream(type);
     }
     
     @Override
     public <T> Stream<T> doQueryAndStream(
-            String sql, PerRowConversion<T> conversion, Class<T> type, Params params) 
+            Class<T> type, String sql, PerRowConversion<T> conversion, Params params) 
             throws TransactionHandledSQLException {
         return this.operationNotPerformedEmptyStream(type);
     }
@@ -213,31 +213,31 @@ class JdbcTransactionStub implements JdbcTransaction {
     }
     
     @Override
-    public Optional<Object> doQueryAndConvertFirstRow(
-            String sql, FirstRowConversion conversion) 
+    public <T> Optional<T> doQueryAndConvertFirstRow(
+            Class<T> type, String sql, FirstRowConversion conversion) 
             throws TransactionHandledSQLException {
-        return this.operationNotPerformedOptionalValue();
+        return this.operationNotPerformedOptionalValue(type);
     }
     
     @Override
-    public Optional<Object> doQueryAndConvertFirstRowVarargParams(
-            String sql, FirstRowConversion conversion, Object... params) 
+    public <T> Optional<T> doQueryAndConvertFirstRowVarargParams(
+            Class<T> type, String sql, FirstRowConversion conversion, Object... params) 
             throws TransactionHandledSQLException {
-        return this.operationNotPerformedOptionalValue();
+        return this.operationNotPerformedOptionalValue(type);
     }
     
     @Override
-    public Optional<Object> doQueryAndConvertFirstRow(
-            String sql, FirstRowConversion conversion, List<? extends Object> params) 
+    public <T> Optional<T> doQueryAndConvertFirstRow(
+            Class<T> type, String sql, FirstRowConversion conversion, List<? extends Object> params) 
             throws TransactionHandledSQLException {
-        return this.operationNotPerformedOptionalValue();
+        return this.operationNotPerformedOptionalValue(type);
     }
     
     @Override
-    public Optional<Object> doQueryAndConvertFirstRow(
-            String sql, FirstRowConversion conversion, Params params) 
+    public <T> Optional<T> doQueryAndConvertFirstRow(
+            Class<T> type, String sql, FirstRowConversion conversion, Params params) 
             throws TransactionHandledSQLException {
-        return this.operationNotPerformedOptionalValue();
+        return this.operationNotPerformedOptionalValue(type);
     }
 
     @Override

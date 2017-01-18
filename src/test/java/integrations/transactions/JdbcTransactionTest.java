@@ -583,13 +583,13 @@ public class JdbcTransactionTest {
         assertEquals(3, qty);
         
         List<String> list = createDisposableTransaction()
-                .doQueryAndStream(
+                .doQueryAndStream(                        
+                        int.class,
                         "SELECT * " +
                         "FROM table_1", 
                         (row) -> {
                             return (int) row.get("index");
-                        },
-                        int.class)
+                        })
                 .filter(i -> i > 0)
                 .map(i -> String.valueOf(i) + ": index")
                 .collect(toList());
@@ -607,13 +607,13 @@ public class JdbcTransactionTest {
         
         List<String> list = createDisposableTransaction()
                 .doQueryAndStreamVarargParams(
+                        int.class,
                         "SELECT * " +
                         "FROM table_1 " +
                         "WHERE ( label LIKE ? ) AND ( label LIKE ? )", 
                         (row) -> {
                             return (int) row.get("index");
                         },
-                        int.class,
                         "%m%", "%na%")
                 .map(i -> String.valueOf(i) + ": index")
                 .collect(toList());
@@ -659,14 +659,14 @@ public class JdbcTransactionTest {
     
     @Test
     public void firstRowConvertTest() throws Exception {
-        String s = (String) createDisposableTransaction().doQueryAndConvertFirstRow(
+        String s = createDisposableTransaction().doQueryAndConvertFirstRow(
+                String.class,
                 "SELECT TOP 1 * " +
                 "FROM table_1 " +
                 "ORDER BY index ", 
                 (firstRow) -> { 
                     return of( (String) firstRow.get("label"));
-                })
-                .get();        
+                }).get();        
         
         assertTrue(TEST_BASE.ifAllConnectionsReleased());
         
