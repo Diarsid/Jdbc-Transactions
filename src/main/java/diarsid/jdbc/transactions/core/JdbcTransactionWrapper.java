@@ -52,6 +52,7 @@ class JdbcTransactionWrapper implements JdbcTransaction {
     private final ScheduledFuture delayedTearDown;
     private final JdbcPreparedStatementSetter paramsSetter;
     private final JdbcTransactionSqlHistoryRecorder sqlHistory;
+    private boolean ifLogSqlHistoryAnyway;
     
     JdbcTransactionWrapper(
             Connection connection, 
@@ -62,6 +63,7 @@ class JdbcTransactionWrapper implements JdbcTransaction {
         this.delayedTearDown = delayedTearDown;
         this.paramsSetter = argsSetter;
         this.sqlHistory = sqlHistory;
+        this.ifLogSqlHistoryAnyway = false;
     }
     
     /**
@@ -103,6 +105,10 @@ class JdbcTransactionWrapper implements JdbcTransaction {
             throw new JdbcFailureException(
                     "It is impossible to close the database connection. " +
                     "Program will be closed");
+        } finally {
+            if ( this.ifLogSqlHistoryAnyway ) {
+                logger.info(this.getSqlHistory());
+            }
         }
     }
     
@@ -677,6 +683,12 @@ class JdbcTransactionWrapper implements JdbcTransaction {
         } else {
             return new JdbcTransactionStub();
         }        
+    }
+    
+    @Override 
+    public JdbcTransaction logHistoryAfterCommit() {
+        this.ifLogSqlHistoryAnyway = true;
+        return this;
     }
     
     @Override

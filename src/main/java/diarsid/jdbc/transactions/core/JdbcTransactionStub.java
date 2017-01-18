@@ -275,6 +275,11 @@ class JdbcTransactionStub implements JdbcTransaction {
         // if this stub was created - there was ifTrue(FALSE) in previous calls;        
         return this;
     }
+    
+    @Override 
+    public JdbcTransaction logHistoryAfterCommit() {
+        return this;
+    }
 
     @Override
     public String getSqlHistory() {

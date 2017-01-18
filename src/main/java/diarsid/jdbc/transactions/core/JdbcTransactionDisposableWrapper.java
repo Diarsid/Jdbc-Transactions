@@ -29,10 +29,12 @@ class JdbcTransactionDisposableWrapper implements JdbcTransaction {
     
     private final JdbcTransaction wrappedTransaction;
     private final SingleUsageMarker marker;
+    private String sqlHistory;
     
     JdbcTransactionDisposableWrapper(JdbcTransaction actualTransaction) {
         this.wrappedTransaction = actualTransaction;
         this.marker = new SingleUsageMarker();
+        this.sqlHistory = "[EMPTY]";
     }
     
     private void checkIfNotUsed() {
@@ -45,6 +47,7 @@ class JdbcTransactionDisposableWrapper implements JdbcTransaction {
     
     private void commitTransactionAndMarkAsUsed() throws TransactionHandledSQLException {
         this.marker.markUsed();
+        this.sqlHistory = this.wrappedTransaction.getSqlHistory();
         this.wrappedTransaction.commit();       
     }
     
@@ -377,13 +380,19 @@ class JdbcTransactionDisposableWrapper implements JdbcTransaction {
             return new JdbcTransactionStub();
         }
     }
+    
+    @Override 
+    public JdbcTransaction logHistoryAfterCommit() {
+        this.wrappedTransaction.logHistoryAfterCommit();
+        return this;
+    }
 
     @Override
     public String getSqlHistory() {
         try {
             this.commitTransactionAndMarkAsUsed();
         } finally {
-            throw new UnsupportedOperationException("Not intended for obtaining SQL history.");
+            return this.sqlHistory;
         }
     }
 }

@@ -59,7 +59,7 @@ public class JdbcTransactionFactory {
     private JdbcTransaction setNewTransaction() throws SQLException {
         Connection connection = connectionsSource.getConnection();
         JdbcTransactionSqlHistoryRecorder sqlHistoryRecorder =
-            new JdbcTransactionSqlHistoryRecorder();
+                new JdbcTransactionSqlHistoryRecorder();
         connection.setAutoCommit(false);
         ScheduledFuture connectionTearDown =
             this.transactionGuard.accept(connection, sqlHistoryRecorder);

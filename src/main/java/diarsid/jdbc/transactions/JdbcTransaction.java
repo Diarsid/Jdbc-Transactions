@@ -157,5 +157,7 @@ public interface JdbcTransaction extends AutoCloseable {
     
     JdbcTransaction ifTrue(boolean condition);
     
+    JdbcTransaction logHistoryAfterCommit();
+    
     String getSqlHistory();
 }

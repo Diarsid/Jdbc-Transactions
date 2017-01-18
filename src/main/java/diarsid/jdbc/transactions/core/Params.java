@@ -7,6 +7,8 @@
 package diarsid.jdbc.transactions.core;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 
 /**
  *
@@ -22,6 +24,14 @@ public class Params {
     
     public static Params params(Object... params) {
         return new Params(params);
+    }
+    
+    public static Params params(List<Object> params) {
+        return new Params(params.toArray());
+    }
+    
+    public static Params params(Set<Object> params) {
+        return new Params(params.toArray());
     }
     
     Object[] get() {

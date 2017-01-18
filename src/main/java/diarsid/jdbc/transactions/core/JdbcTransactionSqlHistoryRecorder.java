@@ -19,9 +19,17 @@ import static java.util.stream.Collectors.joining;
 class JdbcTransactionSqlHistoryRecorder {
     
     private static final String LINE_SEPARATOR;
+    private static final String TAB;
+    private static final String TAB_TAB;
+    private static final String LINE_SEPARATOR_TAB; 
+    private static final String LINE_SEPARATOR_TAB_TAB; 
     
     static {
+        TAB = "->";
+        TAB_TAB = TAB + TAB;
         LINE_SEPARATOR = System.lineSeparator();
+        LINE_SEPARATOR_TAB = LINE_SEPARATOR + TAB;
+        LINE_SEPARATOR_TAB_TAB = LINE_SEPARATOR + TAB + TAB;
     }
     
     private final StringBuilder stringBuilder;    
@@ -64,7 +72,8 @@ class JdbcTransactionSqlHistoryRecorder {
 
     private void addParamsLine(Object[] params) {
         this.stringBuilder
-                .append("   ( ")
+                .append(TAB_TAB)
+                .append("( ")
                 .append(stream(params)
                         .map(obj -> obj.toString())
                         .collect(joining(", ")))
@@ -88,10 +97,24 @@ class JdbcTransactionSqlHistoryRecorder {
     
     private String formattedSqlHistory() {
         return this.stringBuilder.toString()
-                .replaceAll("(where|WHERE)", LINE_SEPARATOR + "WHERE")
-                .replaceAll("(from|FROM)", LINE_SEPARATOR + "FROM")
-                .replaceAll("(group by|GROUP BY)", LINE_SEPARATOR + "GROUP BY")
-                .replaceAll("(values|VALUES)", LINE_SEPARATOR + "VALUES");
+                .replaceAll("\\s+", " ")
+                .replaceAll("[" + LINE_SEPARATOR + "]+", "")
+                .replaceAll("[\\[]+", "\n[")
+                .replaceAll("(all|ALL)", "ALL")
+                .replaceAll("(union|UNION)", LINE_SEPARATOR_TAB_TAB + "UNION")
+                .replaceAll("(insert|INSERT)", LINE_SEPARATOR_TAB + "INSERT")
+                .replaceAll("(delete|DELETE)", LINE_SEPARATOR_TAB + "DELETE")
+                .replaceAll("(update|UPDATE)", LINE_SEPARATOR_TAB + "UPDATE")
+                .replaceAll("(set|SET)", LINE_SEPARATOR_TAB + "SET")
+                .replaceAll("(select|SELECT)", LINE_SEPARATOR_TAB + "SELECT")
+                .replaceAll("(where|WHERE)", LINE_SEPARATOR_TAB + "WHERE")
+                .replaceAll("(from|FROM)", LINE_SEPARATOR_TAB + "FROM")
+                .replaceAll("(group by|GROUP BY)", LINE_SEPARATOR_TAB + "GROUP BY")
+                .replaceAll("(order by|ORDER BY)", LINE_SEPARATOR_TAB + "ORDER BY")
+                .replaceAll("(values|VALUES)", LINE_SEPARATOR_TAB + "VALUES")
+                .replaceAll("(having|HAVING)", LINE_SEPARATOR_TAB + "VALUES")
+                .replace(TAB_TAB + "(", LINE_SEPARATOR + TAB_TAB + "(")
+                .replace(TAB, "    ");
     }
     
     void rollback() {
