@@ -22,7 +22,7 @@ class ParamSetterBinaryStream implements JdbcPreparedStatementParamSetter {
     }
 
     @Override
-    public void setParameter(PreparedStatement statement, int index, Object param) 
+    public void setParameterInto(PreparedStatement statement, int index, Object param) 
             throws SQLException {
         statement.setBinaryStream(index, ((InputStream) param));
     }

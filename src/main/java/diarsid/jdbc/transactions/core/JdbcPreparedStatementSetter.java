@@ -36,18 +36,13 @@ public class JdbcPreparedStatementSetter {
         this.setters = unmodifiableSet(defaultSetters);
     }
     
-    void setParameters(PreparedStatement statement, Object[] args) throws SQLException {
-        int counter = 1;
-        for (Object arg : args) {
-            this.setParameter(statement, arg, counter);
-            counter++;
+    void setParameters(PreparedStatement statement, Object[] params) throws SQLException {
+        int paramIndex = 1;
+        for (Object param : params) {
+            this.findAppropriateSetterFor(param)
+                    .setParameterInto(statement, paramIndex, param);
+            paramIndex++;
         }
-    }
-        
-    private void setParameter(PreparedStatement statement, Object arg, int counter) 
-            throws SQLException {        
-        this.findAppropriateSetterFor(arg)
-                .setParameter(statement, counter, arg);
     }
     
     private JdbcPreparedStatementParamSetter findAppropriateSetterFor(Object obj) {

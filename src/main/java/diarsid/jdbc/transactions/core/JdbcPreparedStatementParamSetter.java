@@ -16,5 +16,7 @@ public interface JdbcPreparedStatementParamSetter {
 
     boolean applicableTo(Object o);
 
-    void setParameter(PreparedStatement statement, int index, Object param) throws SQLException ;    
+    void setParameterInto(
+            PreparedStatement statement, int index, Object param) 
+            throws SQLException;    
 }

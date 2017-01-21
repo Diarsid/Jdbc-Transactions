@@ -8,6 +8,8 @@ package diarsid.jdbc.transactions.core;
 
 import java.util.Set;
 
+import diarsid.jdbc.transactions.SqlHistoryFormattingAlgorithm;
+
 import static java.lang.String.format;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.joining;
@@ -19,24 +21,20 @@ import static java.util.stream.Collectors.joining;
 class JdbcTransactionSqlHistoryRecorder {
     
     private static final String LINE_SEPARATOR;
-    private static final String TAB;
-    private static final String TAB_TAB;
-    private static final String LINE_SEPARATOR_TAB; 
-    private static final String LINE_SEPARATOR_TAB_TAB; 
+    private static final String PARAMETERS_LINE_TAB;
     
     static {
-        TAB = "->";
-        TAB_TAB = TAB + TAB;
-        LINE_SEPARATOR = System.lineSeparator();
-        LINE_SEPARATOR_TAB = LINE_SEPARATOR + TAB;
-        LINE_SEPARATOR_TAB_TAB = LINE_SEPARATOR + TAB + TAB;
+        LINE_SEPARATOR = System.lineSeparator();        
+        PARAMETERS_LINE_TAB = "{p}";
     }
     
     private final StringBuilder stringBuilder;    
     private int counter;
+    private final SqlHistoryFormattingAlgorithm formattingAlgorithm;
     
-    JdbcTransactionSqlHistoryRecorder() {
-        this.stringBuilder = new StringBuilder();    
+    JdbcTransactionSqlHistoryRecorder(SqlHistoryFormattingAlgorithm formattingAlgorithm) {
+        this.stringBuilder = new StringBuilder();  
+        this.formattingAlgorithm = formattingAlgorithm;
         this.init();
     }
     
@@ -72,7 +70,7 @@ class JdbcTransactionSqlHistoryRecorder {
 
     private void addParamsLine(Object[] params) {
         this.stringBuilder
-                .append(TAB_TAB)
+                .append(PARAMETERS_LINE_TAB)
                 .append("( ")
                 .append(stream(params)
                         .map(obj -> obj.toString())
@@ -92,29 +90,8 @@ class JdbcTransactionSqlHistoryRecorder {
     }
     
     String getHistory() {
-        return this.formattedSqlHistory();
-    }
-    
-    private String formattedSqlHistory() {
-        return this.stringBuilder.toString()
-                .replaceAll("\\s+", " ")
-                .replaceAll("[" + LINE_SEPARATOR + "]+", "")
-                .replaceAll("[\\[]+", "\n[")
-                .replaceAll("(all|ALL)", "ALL")
-                .replaceAll("(union|UNION)", LINE_SEPARATOR_TAB_TAB + "UNION")
-                .replaceAll("(insert|INSERT)", LINE_SEPARATOR_TAB + "INSERT")
-                .replaceAll("(delete|DELETE)", LINE_SEPARATOR_TAB + "DELETE")
-                .replaceAll("(update|UPDATE)", LINE_SEPARATOR_TAB + "UPDATE")
-                .replaceAll("(set|SET)", LINE_SEPARATOR_TAB + "SET")
-                .replaceAll("(select|SELECT)", LINE_SEPARATOR_TAB + "SELECT")
-                .replaceAll("(where|WHERE)", LINE_SEPARATOR_TAB + "WHERE")
-                .replaceAll("(from|FROM)", LINE_SEPARATOR_TAB + "FROM")
-                .replaceAll("(group by|GROUP BY)", LINE_SEPARATOR_TAB + "GROUP BY")
-                .replaceAll("(order by|ORDER BY)", LINE_SEPARATOR_TAB + "ORDER BY")
-                .replaceAll("(values|VALUES)", LINE_SEPARATOR_TAB + "VALUES")
-                .replaceAll("(having|HAVING)", LINE_SEPARATOR_TAB + "VALUES")
-                .replace(TAB_TAB + "(", LINE_SEPARATOR + TAB_TAB + "(")
-                .replace(TAB, "    ");
+        return this.formattingAlgorithm.formatSql(
+                this.stringBuilder.toString(), PARAMETERS_LINE_TAB);
     }
     
     void rollback() {

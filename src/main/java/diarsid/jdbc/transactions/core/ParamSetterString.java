@@ -9,8 +9,6 @@ package diarsid.jdbc.transactions.core;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
-import static diarsid.jdbc.transactions.core.SqlUtil.preventSqlInjection;
-
 
 /**
  *
@@ -27,8 +25,8 @@ class ParamSetterString implements JdbcPreparedStatementParamSetter {
     }
     
     @Override
-    public void setParameter(PreparedStatement statement, int index, Object arg) 
+    public void setParameterInto(PreparedStatement statement, int index, Object arg) 
             throws SQLException {
-        statement.setString(index, preventSqlInjection((String) arg));
+        statement.setString(index, (String) arg);
     }
 }

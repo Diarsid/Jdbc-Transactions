@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import diarsid.jdbc.transactions.JdbcConnectionsSource;
 import diarsid.jdbc.transactions.JdbcTransaction;
+import diarsid.jdbc.transactions.SqlHistoryFormattingAlgorithm;
 import diarsid.jdbc.transactions.exceptions.TransactionHandledSQLException;
 
 /**
@@ -28,6 +29,7 @@ public class JdbcTransactionFactory {
     private final JdbcConnectionsSource connectionsSource;
     private final JdbcTransactionGuard transactionGuard;
     private final JdbcPreparedStatementSetter argsSetter;
+    private final SqlHistoryFormattingAlgorithm sqlHistoryFormattingAlgorithm;
     
     public JdbcTransactionFactory(
             JdbcConnectionsSource connectionsSource, 
@@ -36,6 +38,18 @@ public class JdbcTransactionFactory {
         this.connectionsSource = connectionsSource;
         this.transactionGuard = transactionGuard;
         this.argsSetter = argsSetter;
+        this.sqlHistoryFormattingAlgorithm = new StandardSqlHistoryFormattingAlgorithm();
+    }
+    
+    public JdbcTransactionFactory(
+            JdbcConnectionsSource connectionsSource, 
+            JdbcTransactionGuard transactionGuard,
+            JdbcPreparedStatementSetter argsSetter, 
+            SqlHistoryFormattingAlgorithm sqlHistoryFormattingAlgorithm) {
+        this.connectionsSource = connectionsSource;
+        this.transactionGuard = transactionGuard;
+        this.argsSetter = argsSetter;
+        this.sqlHistoryFormattingAlgorithm = sqlHistoryFormattingAlgorithm;
     }
     
     public JdbcTransaction createTransaction() throws TransactionHandledSQLException {
@@ -59,7 +73,7 @@ public class JdbcTransactionFactory {
     private JdbcTransaction setNewTransaction() throws SQLException {
         Connection connection = connectionsSource.getConnection();
         JdbcTransactionSqlHistoryRecorder sqlHistoryRecorder =
-                new JdbcTransactionSqlHistoryRecorder();
+                new JdbcTransactionSqlHistoryRecorder(this.sqlHistoryFormattingAlgorithm);
         connection.setAutoCommit(false);
         ScheduledFuture connectionTearDown =
             this.transactionGuard.accept(connection, sqlHistoryRecorder);

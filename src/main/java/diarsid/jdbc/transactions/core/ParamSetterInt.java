@@ -22,7 +22,7 @@ class ParamSetterInt implements JdbcPreparedStatementParamSetter {
     }
 
     @Override
-    public void setParameter(PreparedStatement statement, int index, Object arg) throws SQLException {
+    public void setParameterInto(PreparedStatement statement, int index, Object arg) throws SQLException {
         statement.setInt(index, (int) arg);
     }
 }

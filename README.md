@@ -1,7 +1,7 @@
 # Jdbc Transactions project
 Simple API to streamline SQL operations through plain bare JDBC. 
 
-### Example
+### Usage
 
 Simple SELECT query:
 ```java
@@ -42,7 +42,7 @@ Simple SELECT query with wildcards:
     try {
         JdbcTransaction transaction = factory.createTransaction();
         
-        transaction.doQuery(
+        transaction.doQueryVarargParams(
                 "SELECT * " +
                 "FROM table " +
                 "WHERE ( col_1 IS ? ) AND ( col_2 IS ? ) ",  
@@ -56,7 +56,7 @@ Simple SELECT query with wildcards:
                 "WHERE ( col_1 IS ? ) AND ( col_2 IS ? ) ",  
                 doForEachRow(),         
                 paramsList);   // <- wildcard (?) parameters as List
-                
+        
         transaction.commit();
     } catch (TransactionHandledException e) {
         // ... 
@@ -67,14 +67,14 @@ Simple update query (INSERT, DELETE, UPDATE)
 ```java
     try {
         JdbcTransaction transaction = factory.createTransaction();
-        transaction.doUpdate(
+        transaction.doUpdateVarargParams(
                 "INSERT INTO table (col_1, col_2, col_3) " +
                 "VALUES ( ?, ?, ? )", 
                 "value_1", true, 42);  // <- wildcard (?) parameters
         transaction.commit();
     } catch (TransactionHandledException e) {
         // ... 
-    }    
+    }  
 ```
 Batch update queries:
 
@@ -87,7 +87,7 @@ import static diarsid.jdbc.transactions.core.Params.params;
         JdbcTransaction transaction = factory.createTransaction();
 
         // 1-st way
-        transaction.doBatchUpdate(
+        transaction.doBatchUpdateVarargParams(
                 "INSERT INTO table (col_1, col_2, col_3) " +
                 "VALUES ( ?, ?, ? )", 
                 params("value_1", true, 42),
@@ -107,7 +107,7 @@ import static diarsid.jdbc.transactions.core.Params.params;
         transaction.commit();
     } catch (TransactionHandledException e) {
         // ... 
-    }  
+    } 
 ```
 Conditional methods execution:
 
@@ -211,24 +211,26 @@ Process the first row only:
         // ...
     }
 ```
-Convert and return data from the first row:
+Convert and return data from the first row as Optional<T>:
 
 ```java
     try {
-        return factory.createDisposableTransaction()         
+        return factory.createDisposableTransaction()   //  <- returns Optional<MyEntity>   
                 .doQueryAndConvertFirstRow( 
+                        MyEntity.class,                //  <- <T> type of Optional
                         "SELECT TOP 1 * " +
                         "FROM table " +
                         "ORDER BY some_col",
                         (firstRow) -> {
-                            // use the first row to get your data...
-                            Object yourData = (int) firstRow.get("column"); 
-                            // ...and return your data inside of Optional.
-                            return Optional.of(yourData);
-                            // if the first row does not exist, your method  
-                            // will not be invoked and empty Optional will be returned instead. 
-                        })                              
-                .get();                                 
+                            // use the first row to get your data and 
+                            // return your data inside of Optional<T>.
+                            return Optional.of(
+                                    new MyEntity(
+                                            (String) firstRow.get("string_col"), 
+                                            (int) firstRow.get("integer_col")));
+                            // If first row does not exist, Optional.empty() will be returned.
+                            // This operation will not be invoked at all. 
+                        });                                 
     } catch (TransactionHandledException e) {        
         // ...
     }
@@ -240,7 +242,7 @@ JdbcTransaction also is AutoCloseable thus it can be used with Java try-with-res
                 factory.createTransaction()) {      //    omit commit() call. It will be comitted
                                                     //    automatically
         transaction
-                .doQuery(
+                .doQueryVarargParams(
                         "SELECT * " +
                         "FROM table " +
                         "WHERE  ( col_a IS ? ) AND ( col_b IS ? )", 
@@ -256,25 +258,24 @@ JdbcTransaction also is AutoCloseable thus it can be used with Java try-with-res
 
 Query methods for Java 8 Streams:
 ```java
-    try (JdbcTransaction transaction =              
-                factory.createTransaction()) {      
+    try (JdbcTransaction transaction = factory.createTransaction()) {      
                                                     
         Stream<MyEntity> stream = transaction
-                .doQueryAndStream(                  // <- query method returning Stream<T>
-                        "SELECT * " +
+                .doQueryAndStreamVarargParams(  // <- query method returning Stream<T>
+                        MyEntity.class,         // <- T type of Stream<T>. It have to be specified as explicit
+                        "SELECT * " +           //    method argument due to Java Generics limitation.
                         "FROM table " +
                         "WHERE ( col_a IS ? ) AND ( col_b IS ? )", 
                         (row) -> {                                  // <- row-to-object conversion.
                             return new MyEntity(                    //    Each object, created here,
                                 (String) row.get("col_string"),     //    will be returned in Stream
                                 (int) row.get("col_int"));
-                        }, 
-                        MyEntity.class,     // <- T type of Stream<T>. It have to be specified as explicit 
-                        "param_1", 42);     //    method argument due to Java Generics limitation.
+                        },      
+                        "param_1", 42);     
                                                     
     } catch (TransactionHandledException e) {        
         // ...
-    } 
+    }
 ```
 Direct access to JDBC through the java.sql.Connection:
 ```java
@@ -304,8 +305,76 @@ Direct access to JDBC through the java.sql.Connection:
                                                              
                     connection.close();   // <- .close() and .abort(...) methods 
                 });                       //    invocations will be ignored.
-                                                    
+                    
     } catch (TransactionHandledException e) {        
         // ...
     }
+```
+JdbcTransaction records your SQL statements. If exceptions occures, SQL history 
+of this particular transaction will be logged. Here is a logged SQL history 
+example of a failed batch update operations:
+
+```
+[Jdbc.Transactions] 21 22:03:57.823 ERROR [diarsid.jdbc.transactions.core.JdbcTransactionWrapper] -  
+[SQL HISTORY] 
+[0] 
+    INSERT INTO table_1 (id, label, index, active) 
+    VALUES (?, ?, ?, ?) 
+        ( 6, name_6, 60, false ) 
+        ( 4, name_4, 40, false ) 
+        ( 5, name_5, 50, false ) 
+[1] 
+    INSERT INTO table_1 (id, label, index, active) 
+    VALUES (?, ?, ?, ?) 
+        ( 8, name_8, 70, false ) 
+        ( 7, name_7, 740, false ) 
+[2] 
+    INSERT INTO table_1 (id, label, index, active) 
+    VALUES (?, ?, ?, ?) 
+        ( 8, name_7, 70, false ) 
+```
+It is possible to force JdbcTransaction to log SQL history after closing anyway:
+
+```java
+    try (JdbcTransaction transaction = factory.createTransaction()) { 
+        
+        // any operations before
+        
+        transaction
+                .logHistoryAfterCommit()    //  <- SQL history will be logged anyway
+                .doBatchUpdateVarargParams(
+                        "INSERT INTO table (col_1, col_2, col_3) " +
+                        "VALUES ( ?, ?, ? )", 
+                        params("value_1", true, 42),
+                        params("value_2", false, 72),
+                        params("value_3", true, 56),
+                        params("value_4", true, 32),
+                        params("value_5", false, 78),
+                        params("value_7", true, 26)); 
+        
+        // any operations after        
+        // it doesn't matter when exactly JdbcTransaction.logHistoryAfterCommit() 
+        // would be invoked - SQL history is being recorded for the whole transaction.
+    } catch (TransactionHandledSQLException e) {
+        // ...
+    }
+```
+SQL history can be also obtained from transaction object directly as String by .getSqlHistory();
+Note that it should be invoked before transaction would be commited.
+
+If you don't like standard SQL history format, you can create your own formatter as shown below.
+Then you can inject it into JdbcTransactionFactory instance.
+
+```java
+
+import diarsid.jdbc.transactions.SqlHistoryFormattingAlgorithm;
+
+public class MySqlFormat implements SqlHistoryFormattingAlgorithm {
+
+    @Override
+    public String formatSql(String sqlHistory, String parametersLineTabSign) {
+        // String 'parametersLineTabSign' is used to distinguish real SQL lines 
+        // and parameters inserted used during each statement execution.
+    }
+}
 ```
