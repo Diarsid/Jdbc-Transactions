@@ -6,9 +6,13 @@
 
 package diarsid.jdbc.transactions.core;
 
-import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Stream;
+
+import static java.util.Arrays.asList;
+import static java.util.stream.Collectors.toList;
 
 /**
  *
@@ -16,36 +20,40 @@ import java.util.Set;
  */
 public class Params {
     
-    private final Object[] params;
+    private final List<Object> params;
         
-    public Params(Object... params) {
+    public Params(List<Object> params) {
         this.params = params;
     }
     
     public static Params params(Object... params) {
-        return new Params(params);
+        return new Params(asList(params));
     }
     
     public static Params params(List<Object> params) {
-        return new Params(params.toArray());
+        return new Params(params);
     }
     
     public static Params params(Set<Object> params) {
-        return new Params(params.toArray());
+        return new Params(params.stream().collect(toList()));
     }
     
-    Object[] get() {
+    List<Object> list() {
         return this.params;
     }
     
+    Stream<Object> stream() {
+        return this.params.stream();
+    }
+    
     int qty() {
-        return this.params.length;
+        return this.params.size();
     }
 
     @Override
     public int hashCode() {
-        int hash = 7;
-        hash = 97 * hash + Arrays.deepHashCode(this.params);
+        int hash = 5;
+        hash = 79 * hash + Objects.hashCode(this.params);
         return hash;
     }
 
@@ -61,9 +69,11 @@ public class Params {
             return false;
         }
         final Params other = ( Params ) obj;
-        if ( !Arrays.deepEquals(this.params, other.params) ) {
+        if ( !Objects.equals(this.params, other.params) ) {
             return false;
         }
         return true;
     }
+    
+    
 }

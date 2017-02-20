@@ -57,6 +57,19 @@ Simple SELECT query with wildcards:
                 doForEachRow(),         
                 paramsList);   // <- wildcard (?) parameters as List
         
+        // It is permitted to mix Collection or Object[] objects 
+        // into vararg params in one paramters statement:
+        List<String> patternsToSearch = asList("%John%", "%Doe%");
+        transaction.doQueryVarargParams(
+                "SELECT *" +
+                "FROM table " +
+                "WHERE " +
+                "   ( id IS ? ) AND " +                         // <- 123
+                "   ( text LIKE ? ) AND ( text LIKE ? ) AND" +  // <- "%John%", "%Doe%" will be applied here
+                "   ( status IS ? ) ",                          // <- true
+                doForEachRow(),
+                123, patternsToSearch, true); // <- List<String> will be automatically unwrapped.
+        
         transaction.commit();
     } catch (TransactionHandledException e) {
         // ... 

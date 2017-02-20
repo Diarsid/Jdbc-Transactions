@@ -36,6 +36,7 @@ import diarsid.jdbc.transactions.exceptions.TransactionTerminationException;
 
 import static java.lang.String.format;
 import static java.lang.Thread.sleep;
+import static java.util.Arrays.asList;
 import static java.util.Optional.of;
 import static java.util.stream.Collectors.toList;
 
@@ -239,6 +240,7 @@ public class JdbcTransactionTest {
      */
     @Test
     public void testDoQuery_3args_3() throws Exception {
+        
     }
 
     /**
@@ -595,6 +597,34 @@ public class JdbcTransactionTest {
                 .collect(toList());
         
         assertEquals(3, list.size());
+        
+        assertTrue(TEST_BASE.ifAllConnectionsReleased());
+    }
+    
+    @Test
+    public void streamedQueryTest_varargWrappedParams() throws Exception {
+        
+        int qty = TEST_BASE.countRowsInTable("table_1");
+        assertEquals(3, qty);
+        
+        List<String> labelPatterns = asList("%na%", "%ame%", "%1%");
+        
+        List<String> list = createDisposableTransaction()
+                .doQueryAndStreamVarargParams(
+                        int.class,
+                        "SELECT * " +
+                        "FROM table_1 " +
+                        "WHERE  ( id IS ? ) AND " +
+                        "       ( label LIKE ? ) AND ( label LIKE ? ) AND ( label LIKE ? ) " +
+                        "       AND ( active IS ? ) ", 
+                        (row) -> {
+                            return (int) row.get("index");
+                        },
+                        1, labelPatterns, true)
+                .map(i -> String.valueOf(i) + ": index")
+                .collect(toList());
+        
+        assertEquals(1, list.size());
         
         assertTrue(TEST_BASE.ifAllConnectionsReleased());
     }

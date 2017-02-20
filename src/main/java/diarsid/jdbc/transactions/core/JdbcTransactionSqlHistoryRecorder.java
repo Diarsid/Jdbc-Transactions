@@ -6,12 +6,12 @@
 
 package diarsid.jdbc.transactions.core;
 
+import java.util.List;
 import java.util.Set;
 
 import diarsid.jdbc.transactions.SqlHistoryFormattingAlgorithm;
 
 import static java.lang.String.format;
-import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.joining;
 
 /**
@@ -60,7 +60,7 @@ class JdbcTransactionSqlHistoryRecorder {
                 .append(LINE_SEPARATOR);
     }
     
-    void add(String sql, Object... params) {
+    void add(String sql, List<? extends Object> params) {
         this.addCounter();
         this.stringBuilder
                 .append(sql)
@@ -68,11 +68,11 @@ class JdbcTransactionSqlHistoryRecorder {
         this.addParamsLine(params);
     }
 
-    private void addParamsLine(Object[] params) {
+    private void addParamsLine(List<? extends Object> params) {
         this.stringBuilder
                 .append(PARAMETERS_LINE_TAB)
                 .append("( ")
-                .append(stream(params)
+                .append(params.stream()
                         .map(obj -> obj.toString())
                         .collect(joining(", ")))
                 .append(" )")
@@ -86,7 +86,7 @@ class JdbcTransactionSqlHistoryRecorder {
                 .append(LINE_SEPARATOR);
         batchParams
                 .stream()
-                .forEach(params -> this.addParamsLine(params.get()));
+                .forEach(params -> this.addParamsLine(params.list()));
     }
     
     String getHistory() {
