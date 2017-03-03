@@ -13,6 +13,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.After;
 import org.junit.Before;
@@ -41,6 +42,7 @@ import static java.util.Optional.of;
 import static java.util.stream.Collectors.toList;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -277,7 +279,7 @@ public class JdbcTransactionTest {
         assertEquals(4, qtyAfter);
     }
     
-    @Test(timeout = 3000)
+    @Test(timeout = 3000)    
     public void testDoUpdate_String_ObjectArr_not_commited_should_be_teared_down_by_Guard() throws Exception {
         int qtyBefore = TEST_BASE.countRowsInTable("table_1");
         assertEquals(3, qtyBefore);
@@ -492,9 +494,9 @@ public class JdbcTransactionTest {
             assertEquals(6, count);
             
             //transaction.commit();   <- explicit commit() call is omitted!
-        } catch (TransactionHandledSQLException e) {
+        } catch (TransactionHandledSQLException | TransactionHandledException e) {
             fail();
-        }
+        } 
         
         assertTrue(TEST_BASE.ifAllConnectionsReleased());
         
@@ -704,6 +706,31 @@ public class JdbcTransactionTest {
     }
     
     @Test
+    public void firstRowConvertTest_empty() throws Exception {
+        clearData();
+        Optional<String> s = Optional.empty();
+        try (JdbcTransaction transact = createDisposableTransaction()) {
+            s = transact
+                    .doQueryAndConvertFirstRow(
+                            String.class,
+                            "SELECT MIN(index) AS index " +
+                            "FROM table_1 " +
+                            "ORDER BY index ",
+                            (firstRow) -> { 
+                                return of(String.valueOf(( int ) firstRow.get("index")));
+                            });
+            fail();
+        } catch (TransactionHandledSQLException | 
+                TransactionHandledException transactionHandledSQLException) {
+            
+        }
+        
+        assertTrue(TEST_BASE.ifAllConnectionsReleased());
+        
+        assertFalse(s.isPresent());
+    }
+    
+    @Test
     public void directJdbcUsage() throws Exception {
         List<String> results = new ArrayList<>();
         createDisposableTransaction()
@@ -729,15 +756,16 @@ public class JdbcTransactionTest {
     @Test
     public void directJdbcUsage_use_forbidden_methods() throws Exception {
         List<String> results = new ArrayList<>();
-        try {
-            createDisposableTransaction()
+        
+        try (JdbcTransaction transact = createDisposableTransaction()) {
+            transact
                     .useJdbcDirectly(
                             (connection) -> {
                         connection.setAutoCommit(true); // here
                         fail();
                         PreparedStatement ps = connection.prepareStatement(
-                                          "SELECT * FROM table_1 " +
-                                          "WHERE ( label LIKE ? ) AND ( id IS ? ) ");
+                                "SELECT * FROM table_1 " +
+                                "WHERE ( label LIKE ? ) AND ( id IS ? ) ");
                         ps.setString(1, "%ame%");
                         ps.setInt(2, 2);
                         
@@ -746,8 +774,8 @@ public class JdbcTransactionTest {
                             results.add(rs.getString("label"));
                         }
                     });
-        } catch (TransactionHandledException transactionHandledException) {
-            // expected;
+        } catch (TransactionHandledSQLException | 
+                TransactionHandledException transactionHandledSQLException) {
         }
         
         assertEquals(0, results.size());

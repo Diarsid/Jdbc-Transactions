@@ -13,7 +13,7 @@ import java.sql.SQLException;
  * 
  * @author Diarsid
  */
-public class TransactionHandledSQLException extends TransactionHandledException{
+public class TransactionHandledSQLException extends Exception{
 
     /**
      * Wrap underlying SQLException that has occurred during an execution

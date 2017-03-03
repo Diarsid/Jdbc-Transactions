@@ -8,8 +8,6 @@ package diarsid.jdbc.transactions;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-import diarsid.jdbc.transactions.exceptions.TransactionHandledSQLException;
-
 /**
  *
  * @author Diarsid
@@ -18,6 +16,5 @@ import diarsid.jdbc.transactions.exceptions.TransactionHandledSQLException;
 @FunctionalInterface
 public interface DirectJdbcOperation {
     
-    void operateJdbcDirectly(Connection connection) 
-            throws SQLException, TransactionHandledSQLException;
+    void operateJdbcDirectly(Connection connection) throws SQLException;
 }

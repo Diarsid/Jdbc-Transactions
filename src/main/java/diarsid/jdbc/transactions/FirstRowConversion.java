@@ -17,5 +17,6 @@ import diarsid.jdbc.transactions.exceptions.TransactionHandledSQLException;
 @FunctionalInterface
 public interface FirstRowConversion <T> {
     
-    <T> Optional<T> convert(Row row) throws TransactionHandledSQLException;
+    <T> Optional<T> convert(Row row) 
+            throws TransactionHandledSQLException, Exception, RuntimeException;
 }

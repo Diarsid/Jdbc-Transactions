@@ -73,7 +73,17 @@ class JdbcTransactionWrapper implements JdbcTransaction {
      */
     @Override
     public void close() {
-        this.commit();
+        try {
+            if ( ! this.connection.isClosed() ) {
+                this.commit();
+            } else {
+                logger.info("closing attempt: connection has already been closed.");
+            }
+        } catch (SQLException ex) {
+            logger.error("exception during connection.isClosed()", ex);
+            // attempt to commit anyway.
+            this.commit();
+        }
     }
     
     private void restoreAutoCommit() {
@@ -136,7 +146,8 @@ class JdbcTransactionWrapper implements JdbcTransaction {
     }
     
     @Override
-    public boolean doesQueryHaveResults(String sql) throws TransactionHandledSQLException {
+    public boolean doesQueryHaveResults(String sql) 
+            throws TransactionHandledSQLException, TransactionHandledException {
         this.sqlHistory.add(sql);
         try {
             Statement statement = this.connection.createStatement();
@@ -151,32 +162,38 @@ class JdbcTransactionWrapper implements JdbcTransaction {
             logger.error("", ex);
             this.rollbackAndFinishAfterException();
             throw new TransactionHandledSQLException(ex);
-        }        
+        } catch (Exception e) {
+            logger.error("Exception occured during query: ");
+            logger.error(sql);
+            logger.error("", e);
+            this.rollbackAndFinishAfterException();
+            throw new TransactionHandledException(e);
+        }       
     }
     
     @Override
     public boolean doesQueryHaveResultsVarargParams(String sql, Object... params) 
-            throws TransactionHandledSQLException {
+            throws TransactionHandledSQLException, TransactionHandledException {
         this.sqlHistory.add(sql, asList(params));
         return this.doesQueryHaveResultsStreamed(sql, stream(params));
     }
     
     @Override
     public boolean doesQueryHaveResults(String sql, List<? extends Object> params) 
-            throws TransactionHandledSQLException {
+            throws TransactionHandledSQLException, TransactionHandledException {
         this.sqlHistory.add(sql, params);
         return this.doesQueryHaveResultsStreamed(sql, params.stream());
     }
     
     @Override
     public boolean doesQueryHaveResults(String sql, Params params) 
-            throws TransactionHandledSQLException {
+            throws TransactionHandledSQLException, TransactionHandledException {
         this.sqlHistory.add(sql, params.list());
         return this.doesQueryHaveResultsStreamed(sql, params.stream());
     }
     
     private boolean doesQueryHaveResultsStreamed(String sql, Stream<? extends Object> params) 
-            throws TransactionHandledSQLException {        
+            throws TransactionHandledSQLException, TransactionHandledException {        
         try {
             PreparedStatement ps = this.connection.prepareStatement(sql);
             this.paramsSetter.setParameters(ps, params);
@@ -191,12 +208,18 @@ class JdbcTransactionWrapper implements JdbcTransaction {
             logger.error("", ex);
             this.rollbackAndFinishAfterException();
             throw new TransactionHandledSQLException(ex);
-        }
+        } catch (Exception e) {
+            logger.error("Exception occured during query: ");
+            logger.error(sql);
+            logger.error("", e);
+            this.rollbackAndFinishAfterException();
+            throw new TransactionHandledException(e);
+        }  
     }
     
     @Override
     public int countQueryResults(String sql) 
-            throws TransactionHandledSQLException {
+            throws TransactionHandledSQLException, TransactionHandledException {
         this.sqlHistory.add(sql);
         try {
             Statement statement = this.connection.createStatement();
@@ -211,32 +234,38 @@ class JdbcTransactionWrapper implements JdbcTransaction {
             logger.error("", ex);
             this.rollbackAndFinishAfterException();
             throw new TransactionHandledSQLException(ex);
-        }        
+        } catch (Exception e) {
+            logger.error("Exception occured during query: ");
+            logger.error(sql);
+            logger.error("", e);
+            this.rollbackAndFinishAfterException();
+            throw new TransactionHandledException(e);
+        }         
     }
     
     @Override
     public int countQueryResultsVarargParams(String sql, Object... params) 
-            throws TransactionHandledSQLException {
+            throws TransactionHandledSQLException, TransactionHandledException {
         this.sqlHistory.add(sql, asList(params));
         return this.countQueryResultsStreamed(sql, stream(params));
     }
     
     @Override
     public int countQueryResults(String sql, List<? extends Object> params) 
-            throws TransactionHandledSQLException {
+            throws TransactionHandledSQLException, TransactionHandledException {
         this.sqlHistory.add(sql, params);
         return this.countQueryResultsStreamed(sql, params.stream());
     }
     
     @Override
     public int countQueryResults(String sql, Params params) 
-            throws TransactionHandledSQLException {        
+            throws TransactionHandledSQLException, TransactionHandledException {        
         this.sqlHistory.add(sql, params.list());
         return this.countQueryResultsStreamed(sql, params.stream());
     }
     
     private int countQueryResultsStreamed(String sql, Stream<? extends Object> params) 
-            throws TransactionHandledSQLException {
+            throws TransactionHandledSQLException, TransactionHandledException {
         try {
             PreparedStatement ps = this.connection.prepareStatement(sql);
             this.paramsSetter.setParameters(ps, params);
@@ -251,7 +280,13 @@ class JdbcTransactionWrapper implements JdbcTransaction {
             logger.error("", ex);
             this.rollbackAndFinishAfterException();
             throw new TransactionHandledSQLException(ex);
-        }
+        } catch (Exception e) {
+            logger.error("Exception occured during query: ");
+            logger.error(sql);
+            logger.error("", e);
+            this.rollbackAndFinishAfterException();
+            throw new TransactionHandledException(e);
+        }  
     }
     
     private int count(ResultSet rs) throws SQLException {
@@ -270,7 +305,7 @@ class JdbcTransactionWrapper implements JdbcTransaction {
     
     @Override
     public void doQuery(String sql, PerRowOperation operation) 
-            throws TransactionHandledSQLException {
+            throws TransactionHandledSQLException, TransactionHandledException {
         this.sqlHistory.add(sql);
         try {
             PreparedStatement ps = this.connection.prepareStatement(sql);
@@ -287,33 +322,39 @@ class JdbcTransactionWrapper implements JdbcTransaction {
             logger.error("", ex);
             this.rollbackAndFinishAfterException();
             throw new TransactionHandledSQLException(ex);
-        }
+        } catch (Exception e) {
+            logger.error("Exception occured during query: ");
+            logger.error(sql);
+            logger.error("", e);
+            this.rollbackAndFinishAfterException();
+            throw new TransactionHandledException(e);
+        }  
     }
     
     @Override
     public void doQuery(String sql, PerRowOperation operation, Params params) 
-            throws TransactionHandledSQLException {
+            throws TransactionHandledSQLException, TransactionHandledException {
         this.sqlHistory.add(sql, params.list());
         this.doQueryStreamed(sql, operation, params.stream());
     }
     
     @Override
     public void doQuery(String sql, PerRowOperation operation, List<? extends Object> params) 
-            throws TransactionHandledSQLException {
+            throws TransactionHandledSQLException, TransactionHandledException {
         this.sqlHistory.add(sql, params);
         this.doQueryStreamed(sql, operation, params.stream());
     }
     
     @Override
     public void doQueryVarargParams(String sql, PerRowOperation operation, Object... params) 
-            throws TransactionHandledSQLException {
+            throws TransactionHandledSQLException, TransactionHandledException {
         this.sqlHistory.add(sql, asList(params));
         this.doQueryStreamed(sql, operation, stream(params));
     }
     
     private void doQueryStreamed(
             String sql, PerRowOperation operation, Stream<? extends Object> params) 
-            throws TransactionHandledSQLException {
+            throws TransactionHandledSQLException, TransactionHandledException {
         try {
             PreparedStatement ps = this.connection.prepareStatement(sql);
             this.paramsSetter.setParameters(ps, params);
@@ -330,13 +371,19 @@ class JdbcTransactionWrapper implements JdbcTransaction {
             logger.error("", ex);
             this.rollbackAndFinishAfterException();
             throw new TransactionHandledSQLException(ex);
-        }
+        } catch (Exception e) {
+            logger.error("Exception occured during query: ");
+            logger.error(sql);
+            logger.error("", e);
+            this.rollbackAndFinishAfterException();
+            throw new TransactionHandledException(e);
+        }  
     }
     
     @Override
     public <T> Stream<T> doQueryAndStream(
             Class<T> type, String sql, PerRowConversion<T> conversion) 
-            throws TransactionHandledSQLException {
+            throws TransactionHandledSQLException, TransactionHandledException {
         this.sqlHistory.add(sql);
         try {
             Statement st = this.connection.createStatement();
@@ -355,13 +402,19 @@ class JdbcTransactionWrapper implements JdbcTransaction {
             logger.error("", ex);
             this.rollbackAndFinishAfterException();
             throw new TransactionHandledSQLException(ex);
-        }
+        } catch (Exception e) {
+            logger.error("Exception occured during query: ");
+            logger.error(sql);
+            logger.error("", e);
+            this.rollbackAndFinishAfterException();
+            throw new TransactionHandledException(e);
+        }  
     }
     
     @Override
     public <T> Stream<T> doQueryAndStream(
             Class<T> type, String sql, PerRowConversion<T> conversion, List<? extends Object> params) 
-            throws TransactionHandledSQLException {
+            throws TransactionHandledSQLException, TransactionHandledException {
         this.sqlHistory.add(sql, params);
         return this.doQueryAndStreamStreamed(type, sql, conversion, params.stream());
     }
@@ -369,7 +422,7 @@ class JdbcTransactionWrapper implements JdbcTransaction {
     @Override
     public <T> Stream<T> doQueryAndStream(
             Class<T> type, String sql, PerRowConversion<T> conversion, Params params) 
-            throws TransactionHandledSQLException {
+            throws TransactionHandledSQLException, TransactionHandledException {
         this.sqlHistory.add(sql, params.list());
         return this.doQueryAndStreamStreamed(type, sql, conversion, params.stream());
     }
@@ -377,14 +430,14 @@ class JdbcTransactionWrapper implements JdbcTransaction {
     @Override
     public <T> Stream<T> doQueryAndStreamVarargParams(
             Class<T> type, String sql, PerRowConversion<T> conversion, Object... params) 
-            throws TransactionHandledSQLException {
+            throws TransactionHandledSQLException, TransactionHandledException {
         this.sqlHistory.add(sql, asList(params));
         return this.doQueryAndStreamStreamed(type, sql, conversion, stream(params));
     }
     
     private <T> Stream<T> doQueryAndStreamStreamed(
             Class<T> type, String sql, PerRowConversion<T> conversion, Stream<? extends Object> params) 
-                    throws TransactionHandledSQLException {
+                    throws TransactionHandledSQLException, TransactionHandledException {
         try {
             PreparedStatement ps = this.connection.prepareStatement(sql);
             this.paramsSetter.setParameters(ps, params);
@@ -403,12 +456,18 @@ class JdbcTransactionWrapper implements JdbcTransaction {
             logger.error("", ex);
             this.rollbackAndFinishAfterException();
             throw new TransactionHandledSQLException(ex);
-        }
+        } catch (Exception e) {
+            logger.error("Exception occured during query: ");
+            logger.error(sql);
+            logger.error("", e);
+            this.rollbackAndFinishAfterException();
+            throw new TransactionHandledException(e);
+        }  
     }
     
     @Override
     public void useJdbcDirectly(DirectJdbcOperation jdbcOperation) 
-            throws TransactionHandledException {
+            throws TransactionHandledSQLException, TransactionHandledException {
         this.sqlHistory.add(
                 "[DIRECT JDBC OPERATION] " +
                 "sql history is unreacheable for this operation.");
@@ -437,7 +496,7 @@ class JdbcTransactionWrapper implements JdbcTransaction {
     @Override
     public void doQueryAndProcessFirstRow(
             String sql, FirstRowOperation operation) 
-            throws TransactionHandledSQLException {
+            throws TransactionHandledSQLException, TransactionHandledException {
         this.sqlHistory.add(sql);
         try {
             Statement st = this.connection.createStatement();
@@ -453,13 +512,19 @@ class JdbcTransactionWrapper implements JdbcTransaction {
             logger.error("", ex);
             this.rollbackAndFinishAfterException();
             throw new TransactionHandledSQLException(ex);
-        }
+        } catch (Exception e) {
+            logger.error("Exception occured during query: ");
+            logger.error(sql);
+            logger.error("", e);
+            this.rollbackAndFinishAfterException();
+            throw new TransactionHandledException(e);
+        }  
     }
     
     @Override
     public void doQueryAndProcessFirstRow(
             String sql, FirstRowOperation operation, List<? extends Object> params) 
-            throws TransactionHandledSQLException {
+            throws TransactionHandledSQLException, TransactionHandledException {
         this.sqlHistory.add(sql, params);
         this.doQueryAndProcessFirstRowStreamed(sql, operation, params.stream());
     }
@@ -467,7 +532,7 @@ class JdbcTransactionWrapper implements JdbcTransaction {
     @Override
     public void doQueryAndProcessFirstRow(
             String sql, FirstRowOperation operation, Params params) 
-            throws TransactionHandledSQLException {
+            throws TransactionHandledSQLException, TransactionHandledException {
         this.sqlHistory.add(sql, params.list());
         this.doQueryAndProcessFirstRowStreamed(sql, operation, params.stream());
     }
@@ -475,14 +540,14 @@ class JdbcTransactionWrapper implements JdbcTransaction {
     @Override
     public void doQueryAndProcessFirstRowVarargParams(
             String sql, FirstRowOperation operation, Object... params) 
-            throws TransactionHandledSQLException {
+            throws TransactionHandledSQLException, TransactionHandledException {
         this.sqlHistory.add(sql, asList(params));
         this.doQueryAndProcessFirstRowStreamed(sql, operation, stream(params));
     }
     
     private void doQueryAndProcessFirstRowStreamed(
             String sql, FirstRowOperation operation, Stream<? extends Object> params) 
-            throws TransactionHandledSQLException {
+            throws TransactionHandledSQLException, TransactionHandledException {
         try {
             PreparedStatement ps = this.connection.prepareStatement(sql);
             this.paramsSetter.setParameters(ps, params);
@@ -498,20 +563,27 @@ class JdbcTransactionWrapper implements JdbcTransaction {
             logger.error("", ex);
             this.rollbackAndFinishAfterException();
             throw new TransactionHandledSQLException(ex);
-        }
+        } catch (Exception e) {
+            logger.error("Exception occured during query: ");
+            logger.error(sql);
+            logger.error("", e);
+            this.rollbackAndFinishAfterException();
+            throw new TransactionHandledException(e);
+        }  
     }
     
     @Override
     public <T> Optional<T> doQueryAndConvertFirstRow(
             Class<T> type, String sql, FirstRowConversion conversion) 
-            throws TransactionHandledSQLException {
+            throws TransactionHandledSQLException, TransactionHandledException {
         this.sqlHistory.add(sql);
         try {
             Statement st = this.connection.createStatement();
             ResultSet rs = st.executeQuery(sql);
             Optional<T> optional;
             if ( rs.first() ) {
-                optional = conversion.convert(this.wrapResultSetIntoRow(rs));
+                Row row = this.wrapResultSetIntoRow(rs);
+                optional = conversion.convert(row);
             } else {
                 optional = empty();
             }
@@ -524,13 +596,19 @@ class JdbcTransactionWrapper implements JdbcTransaction {
             logger.error("", ex);
             this.rollbackAndFinishAfterException();
             throw new TransactionHandledSQLException(ex);
-        }
+        } catch (Exception e) {
+            logger.error("Exception occured during query: ");
+            logger.error(sql);
+            logger.error("", e);
+            this.rollbackAndFinishAfterException();
+            throw new TransactionHandledException(e);
+        }  
     }
     
     @Override
     public <T> Optional<T> doQueryAndConvertFirstRow(
             Class<T> type, String sql, FirstRowConversion conversion, List<? extends Object> params) 
-            throws TransactionHandledSQLException {
+            throws TransactionHandledSQLException, TransactionHandledException {
         this.sqlHistory.add(sql, params);
         return this.doQueryAndConvertFirstRowStreamed(type, sql, conversion, params.stream());
     }
@@ -538,7 +616,7 @@ class JdbcTransactionWrapper implements JdbcTransaction {
     @Override
     public <T> Optional<T> doQueryAndConvertFirstRow(
             Class<T> type, String sql, FirstRowConversion conversion, Params params) 
-            throws TransactionHandledSQLException {
+            throws TransactionHandledSQLException, TransactionHandledException {
         this.sqlHistory.add(sql, params.list());
         return this.doQueryAndConvertFirstRowStreamed(type, sql, conversion, params.stream());
     }
@@ -546,14 +624,14 @@ class JdbcTransactionWrapper implements JdbcTransaction {
     @Override
     public <T> Optional<T> doQueryAndConvertFirstRowVarargParams(
             Class<T> type, String sql, FirstRowConversion conversion, Object... params) 
-            throws TransactionHandledSQLException {
+            throws TransactionHandledSQLException, TransactionHandledException {
         this.sqlHistory.add(sql, asList(params));
         return this.doQueryAndConvertFirstRowStreamed(type, sql, conversion, stream(params));
     }
     
     private <T> Optional<T> doQueryAndConvertFirstRowStreamed(
             Class<T> type, String sql, FirstRowConversion conversion, Stream<? extends Object> params) 
-            throws TransactionHandledSQLException {
+            throws TransactionHandledSQLException, TransactionHandledException {
         try {
             PreparedStatement ps = this.connection.prepareStatement(sql);
             this.paramsSetter.setParameters(ps, params);
@@ -573,12 +651,18 @@ class JdbcTransactionWrapper implements JdbcTransaction {
             logger.error("", ex);
             this.rollbackAndFinishAfterException();
             throw new TransactionHandledSQLException(ex);
-        }
+        } catch (Exception e) {
+            logger.error("Exception occured during query: ");
+            logger.error(sql);
+            logger.error("", e);
+            this.rollbackAndFinishAfterException();
+            throw new TransactionHandledException(e);
+        }  
     }
     
     @Override
     public int doUpdate(String updateSql) 
-            throws TransactionHandledSQLException {
+            throws TransactionHandledSQLException, TransactionHandledException {
         this.sqlHistory.add(updateSql);
         try {
             Statement ps = this.connection.createStatement();
@@ -591,32 +675,38 @@ class JdbcTransactionWrapper implements JdbcTransaction {
             logger.error("", ex);
             this.rollbackAndFinishAfterException();
             throw new TransactionHandledSQLException(ex);
-        }
+        } catch (Exception e) {
+            logger.error("Exception occured during update: ");
+            logger.error(updateSql);
+            logger.error("", e);
+            this.rollbackAndFinishAfterException();
+            throw new TransactionHandledException(e);
+        }  
     }
     
     @Override
     public int doUpdate(String updateSql, Params params) 
-            throws TransactionHandledSQLException {
+            throws TransactionHandledSQLException, TransactionHandledException {
         this.sqlHistory.add(updateSql, params.list());
         return this.doUpdateStreamed(updateSql, params.stream());
     }
     
     @Override
     public int doUpdate(String updateSql, List<? extends Object> params) 
-            throws TransactionHandledSQLException {
+            throws TransactionHandledSQLException, TransactionHandledException {
         this.sqlHistory.add(updateSql, params);
         return this.doUpdateStreamed(updateSql, params.stream());
     }
     
     @Override
     public int doUpdateVarargParams(String updateSql, Object... params) 
-            throws TransactionHandledSQLException {
+            throws TransactionHandledSQLException, TransactionHandledException {
         this.sqlHistory.add(updateSql, asList(params));
         return this.doUpdateStreamed(updateSql, stream(params));
     }
     
     private int doUpdateStreamed(String updateSql, Stream<? extends Object> params) 
-            throws TransactionHandledSQLException {
+            throws TransactionHandledSQLException, TransactionHandledException {
         try {
             PreparedStatement ps = this.connection.prepareStatement(updateSql);
             this.paramsSetter.setParameters(ps, params);
@@ -629,13 +719,21 @@ class JdbcTransactionWrapper implements JdbcTransaction {
             logger.error("", ex);
             this.rollbackAndFinishAfterException();
             throw new TransactionHandledSQLException(ex);
-        }
+        } catch (Exception e) {
+            logger.error("Exception occured during update: ");
+            logger.error(updateSql);
+            logger.error("", e);
+            this.rollbackAndFinishAfterException();
+            throw new TransactionHandledException(e);
+        }  
     }
     
     @Override
     public int[] doBatchUpdate(String updateSql, Set<Params> batchParams) 
-            throws TransactionHandledSQLException {
-        this.nonEmptyParamsOnly(batchParams, updateSql);
+            throws TransactionHandledSQLException, TransactionHandledException {
+        if ( batchParams.isEmpty() ) {
+            return new int[0];
+        }
         this.paramsMustHaveEqualQty(batchParams, updateSql);
         this.sqlHistory.add(updateSql, batchParams);
         try {
@@ -657,7 +755,17 @@ class JdbcTransactionWrapper implements JdbcTransaction {
             logger.error("", ex);
             this.rollbackAndFinishAfterException();
             throw new TransactionHandledSQLException(ex);
-        }
+        } catch (Exception e) {
+            logger.error("Exception occured during batch update: ");
+            logger.error(updateSql);
+            logger.error("...with params: ");
+            for (Params params : batchParams) {
+                logger.error(this.concatenateParams(params.list()));
+            }
+            logger.error("", e);
+            this.rollbackAndFinishAfterException();
+            throw new TransactionHandledException(e);
+        }  
     }
 
     private void paramsMustHaveEqualQty(Set<Params> batchParams, String updateSql) {
@@ -666,7 +774,7 @@ class JdbcTransactionWrapper implements JdbcTransaction {
                 .stream()
                 .filter(params -> params.qty() != paramsQty)
                 .findFirst()
-                .ifPresent(params -> {this.paramsQtyAreDifferent(updateSql);});
+                .ifPresent(params -> this.paramsQtyAreDifferent(updateSql));
     }
     
     private void paramsQtyAreDifferent(String sql) {
@@ -683,7 +791,7 @@ class JdbcTransactionWrapper implements JdbcTransaction {
     
     @Override
     public int[] doBatchUpdateVarargParams(String updateSql, Params... batchParams) 
-            throws TransactionHandledSQLException {
+            throws TransactionHandledSQLException, TransactionHandledException {
         return this.doBatchUpdate(updateSql, new HashSet<>(asList(batchParams)));
     }
 

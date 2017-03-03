@@ -15,5 +15,5 @@ import diarsid.jdbc.transactions.exceptions.TransactionHandledSQLException;
 @FunctionalInterface
 public interface FirstRowOperation {
     
-    void process(Row row) throws TransactionHandledSQLException;
+    void process(Row row) throws TransactionHandledSQLException, Exception;
 }
