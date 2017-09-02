@@ -58,12 +58,13 @@ class JdbcTransactionWrapper implements JdbcTransaction {
             Connection connection, 
             ScheduledFuture delayedTearDown, 
             JdbcPreparedStatementSetter argsSetter,
-            JdbcTransactionSqlHistoryRecorder sqlHistory) {
+            JdbcTransactionSqlHistoryRecorder sqlHistory, 
+            boolean logHistory) {
         this.connection = connection;
         this.delayedTearDown = delayedTearDown;
         this.paramsSetter = argsSetter;
         this.sqlHistory = sqlHistory;
-        this.ifLogSqlHistoryAnyway = false;
+        this.ifLogSqlHistoryAnyway = logHistory;
     }
     
     /**

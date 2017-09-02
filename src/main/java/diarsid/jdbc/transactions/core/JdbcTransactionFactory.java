@@ -30,6 +30,7 @@ public class JdbcTransactionFactory {
     private final JdbcTransactionGuard transactionGuard;
     private final JdbcPreparedStatementSetter argsSetter;
     private final SqlHistoryFormattingAlgorithm sqlHistoryFormattingAlgorithm;
+    private boolean logHistory;
     
     public JdbcTransactionFactory(
             JdbcConnectionsSource connectionsSource, 
@@ -39,6 +40,7 @@ public class JdbcTransactionFactory {
         this.transactionGuard = transactionGuard;
         this.argsSetter = argsSetter;
         this.sqlHistoryFormattingAlgorithm = new StandardSqlHistoryFormattingAlgorithm();
+        this.logHistory = false;
     }
     
     public JdbcTransactionFactory(
@@ -50,6 +52,7 @@ public class JdbcTransactionFactory {
         this.transactionGuard = transactionGuard;
         this.argsSetter = argsSetter;
         this.sqlHistoryFormattingAlgorithm = sqlHistoryFormattingAlgorithm;
+        this.logHistory = false;
     }
     
     public JdbcTransaction createTransaction() throws TransactionHandledSQLException {
@@ -69,6 +72,10 @@ public class JdbcTransactionFactory {
             throw new TransactionHandledSQLException(e);
         }        
     }
+    
+    public void logHistory(boolean b) {
+        this.logHistory = b;
+    }
 
     private JdbcTransaction setNewTransaction() throws SQLException {
         Connection connection = connectionsSource.getConnection();
@@ -78,7 +85,11 @@ public class JdbcTransactionFactory {
         ScheduledFuture connectionTearDown =
             this.transactionGuard.accept(connection, sqlHistoryRecorder);
         return new JdbcTransactionWrapper(
-                connection, connectionTearDown, this.argsSetter, sqlHistoryRecorder);
+                connection, 
+                connectionTearDown, 
+                this.argsSetter, 
+                sqlHistoryRecorder, 
+                this.logHistory);
     }    
     
     public void close() {
