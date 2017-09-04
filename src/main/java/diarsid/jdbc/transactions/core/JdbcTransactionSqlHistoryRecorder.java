@@ -73,10 +73,18 @@ class JdbcTransactionSqlHistoryRecorder {
                 .append(PARAMETERS_LINE_TAB)
                 .append("( ")
                 .append(params.stream()
-                        .map(obj -> obj.toString())
+                        .map(obj -> stringify(obj))
                         .collect(joining(", ")))
                 .append(" )")
                 .append(LINE_SEPARATOR);
+    }
+    
+    private static String stringify(Object obj) {
+        if ( obj instanceof Enum ) {
+            return ((Enum) obj).name();
+        } else {
+            return obj.toString();
+        }
     }
     
     void add(String sql, Set<Params> batchParams) {

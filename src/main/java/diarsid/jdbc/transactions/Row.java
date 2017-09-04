@@ -14,4 +14,8 @@ import diarsid.jdbc.transactions.exceptions.TransactionHandledSQLException;
 public interface Row {
     
     Object get(String columnLabel) throws TransactionHandledSQLException;
+    
+    <T> T get(String columnLabel, Class<T> t) throws TransactionHandledSQLException;
+    
+    byte[] getBytes(String columnLabel) throws TransactionHandledSQLException;
 }

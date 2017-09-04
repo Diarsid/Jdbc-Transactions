@@ -38,7 +38,6 @@ import diarsid.jdbc.transactions.exceptions.TransactionTerminationException;
 import static java.lang.String.format;
 import static java.lang.Thread.sleep;
 import static java.util.Arrays.asList;
-import static java.util.Optional.of;
 import static java.util.stream.Collectors.toList;
 
 import static org.junit.Assert.assertEquals;
@@ -697,7 +696,7 @@ public class JdbcTransactionTest {
                 "FROM table_1 " +
                 "ORDER BY index ", 
                 (firstRow) -> { 
-                    return of( (String) firstRow.get("label"));
+                    return (String) firstRow.get("label");
                 }).get();        
         
         assertTrue(TEST_BASE.ifAllConnectionsReleased());
@@ -717,7 +716,7 @@ public class JdbcTransactionTest {
                             "FROM table_1 " +
                             "ORDER BY index ",
                             (firstRow) -> { 
-                                return of(String.valueOf(( int ) firstRow.get("index")));
+                                return String.valueOf(( int ) firstRow.get("index"));
                             });
             fail();
         } catch (TransactionHandledSQLException | 
