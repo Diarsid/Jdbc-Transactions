@@ -82,6 +82,8 @@ class JdbcTransactionSqlHistoryRecorder {
     private static String stringify(Object obj) {
         if ( obj instanceof Enum ) {
             return ((Enum) obj).name();
+        } else if ( obj instanceof byte[] || obj instanceof Byte[] ) {
+            return format("bytes:%s", ((byte[]) obj).length );
         } else {
             return obj.toString();
         }

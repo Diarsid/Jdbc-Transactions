@@ -55,7 +55,8 @@ public class JdbcPreparedStatementSetter {
         return stream.flatMap(obj -> {
             if ( obj instanceof Collection ) {
                 return ( (Collection) obj ).stream();
-            } else if ( obj.getClass().isArray() ) {
+            } else if ( obj.getClass().isArray() 
+                    && ! (obj instanceof byte[] || obj instanceof Byte[]) ) {
                 return stream( (Object[]) obj );
             } else {
                 return Stream.of(obj);
