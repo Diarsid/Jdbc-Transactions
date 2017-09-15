@@ -6,12 +6,14 @@
 
 package diarsid.jdbc.transactions.core;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
 import diarsid.jdbc.transactions.SqlHistoryFormattingAlgorithm;
 
 import static java.lang.String.format;
+import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.joining;
 
 /**
@@ -84,9 +86,26 @@ class JdbcTransactionSqlHistoryRecorder {
             return ((Enum) obj).name();
         } else if ( obj instanceof byte[] || obj instanceof Byte[] ) {
             return format("bytes:%s", ((byte[]) obj).length );
+        } else if ( obj instanceof Collection ) { 
+            return stringifyAsCollection(obj);
+        } else if ( obj.getClass().isArray() ) { 
+            return stringifyAsArray(obj);
         } else {
             return obj.toString();
         }
+    }
+    
+    private static String stringifyAsCollection(Object obj) {
+        return ((Collection<Object>) obj)
+                .stream()
+                .map(object -> stringify(object))
+                .collect(joining(", "));
+    }
+    
+    private static String stringifyAsArray(Object obj) {
+        return stream(((Object[]) obj))
+                .map(object -> stringify(object))
+                .collect(joining(", "));
     }
     
     void add(String sql, Set<Params> batchParams) {

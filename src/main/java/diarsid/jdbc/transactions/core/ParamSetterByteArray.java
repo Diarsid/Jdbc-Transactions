@@ -25,7 +25,7 @@ class ParamSetterByteArray implements JdbcPreparedStatementParamSetter {
     public void setParameterInto(PreparedStatement statement, int index, Object param) 
             throws SQLException {
         Blob blob = statement.getConnection().createBlob();
-        blob.setBytes(0, (byte[])param);
+        blob.setBytes(1, (byte[])param);
         statement.setBlob(index, blob);
     }
 }
