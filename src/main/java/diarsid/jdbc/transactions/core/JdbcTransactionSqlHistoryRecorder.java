@@ -124,8 +124,9 @@ class JdbcTransactionSqlHistoryRecorder {
     }
     
     void rollback() {
-        this.clear();
-        this.init();        
+        this.stringBuilder
+                .append("[ROLLBACK]")
+                .append(LINE_SEPARATOR);
     }
     
     void clear() {

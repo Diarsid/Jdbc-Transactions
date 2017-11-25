@@ -11,7 +11,9 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import static java.lang.String.format;
 import static java.util.Arrays.asList;
+import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -48,6 +50,15 @@ public class Params {
     
     int qty() {
         return this.params.size();
+    }
+    
+    @Override
+    public String toString() {
+        return format(
+                "PARAMS[%s]", this.params
+                        .stream()
+                        .map(obj -> String.valueOf(obj))
+                        .collect(joining(", ")));
     }
 
     @Override
