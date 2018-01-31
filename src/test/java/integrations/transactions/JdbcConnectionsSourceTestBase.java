@@ -34,4 +34,9 @@ public class JdbcConnectionsSourceTestBase implements JdbcConnectionsSource {
     public void closeSource() {
         
     }
+
+    @Override
+    public int totalConnectionsQuantity() {
+        return this.embeddedBase.getConnectionsQuantity();
+    }
 }

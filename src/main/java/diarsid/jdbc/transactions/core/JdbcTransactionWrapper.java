@@ -16,7 +16,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ScheduledFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -37,6 +36,7 @@ import diarsid.jdbc.transactions.exceptions.TransactionTerminationException;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
+import static java.util.Objects.nonNull;
 import static java.util.Optional.empty;
 
 import static diarsid.jdbc.transactions.core.SqlConnectionProxyFactory.createProxy;
@@ -47,19 +47,19 @@ class JdbcTransactionWrapper implements JdbcTransaction {
     private static final Logger logger = LoggerFactory.getLogger(JdbcTransactionWrapper.class);
     
     private final Connection connection;
-    private final ScheduledFuture delayedTearDown;
+    private final Runnable delayedTearDownCancel;
     private final JdbcPreparedStatementSetter paramsSetter;
     private final JdbcTransactionSqlHistoryRecorder sqlHistory;
     private boolean ifLogSqlHistoryAnyway;
     
     JdbcTransactionWrapper(
             Connection connection, 
-            ScheduledFuture delayedTearDown, 
+            Runnable delayedTearDownCancel, 
             JdbcPreparedStatementSetter argsSetter,
             JdbcTransactionSqlHistoryRecorder sqlHistory, 
             boolean logHistory) {
         this.connection = connection;
-        this.delayedTearDown = delayedTearDown;
+        this.delayedTearDownCancel = delayedTearDownCancel;
         this.paramsSetter = argsSetter;
         this.sqlHistory = sqlHistory;
         this.ifLogSqlHistoryAnyway = logHistory;
@@ -108,7 +108,9 @@ class JdbcTransactionWrapper implements JdbcTransaction {
     private void closeConnectionAnyway() {
         try {
             this.connection.close();
-            this.delayedTearDown.cancel(true);
+            if ( nonNull(this.delayedTearDownCancel) ) {
+                this.delayedTearDownCancel.run();
+            }
         } catch (SQLException e) {
             logger.error("cannot close connection: ", e);
             throw new JdbcFailureException(

@@ -16,5 +16,7 @@ public interface JdbcConnectionsSource {
     
     Connection getConnection() throws SQLException;
     
+    int totalConnectionsQuantity();
+    
     void closeSource();
 }

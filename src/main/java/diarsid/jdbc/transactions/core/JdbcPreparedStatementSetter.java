@@ -18,17 +18,18 @@ import diarsid.jdbc.transactions.exceptions.JdbcPreparedStatementParamsException
 import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
 import static java.util.Collections.unmodifiableSet;
+import static java.util.Objects.nonNull;
 import static java.util.stream.Collectors.toList;
 
 /**
  *
  * @author Diarsid
  */
-public class JdbcPreparedStatementSetter {
+class JdbcPreparedStatementSetter {
     
     private final Set<JdbcPreparedStatementParamSetter> setters;
     
-    public JdbcPreparedStatementSetter(
+    JdbcPreparedStatementSetter(
             JdbcPreparedStatementParamSetter... additionalSetters) {
         Set<JdbcPreparedStatementParamSetter> defaultSetters = new HashSet<>();
         defaultSetters.add(new ParamSetterString());
@@ -38,7 +39,9 @@ public class JdbcPreparedStatementSetter {
         defaultSetters.add(new ParamSetterBinaryStream());
         defaultSetters.add(new ParamSetterLocalDateTime());
         defaultSetters.add(new ParamSetterEnum());
-        defaultSetters.addAll(asList(additionalSetters));
+        if ( nonNull(additionalSetters) && additionalSetters.length > 0 ) {
+            defaultSetters.addAll(asList(additionalSetters));
+        }
         this.setters = unmodifiableSet(defaultSetters);
     }
     

@@ -14,7 +14,9 @@ import java.sql.SQLException;
  */
 public interface TestDataBase {
     
-    Connection getConnection() throws SQLException ;
+    Connection getConnection() throws SQLException;
+    
+    int getConnectionsQuantity();
     
     void setupRequiredTable(String tableCreationSQLScript);
     

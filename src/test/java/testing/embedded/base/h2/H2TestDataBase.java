@@ -88,4 +88,9 @@ public class H2TestDataBase implements TestDataBase {
     public boolean ifAllConnectionsReleased() {
         return ( this.conPool.getActiveConnections() == 0 );
     }
+
+    @Override
+    public int getConnectionsQuantity() {
+        return POOL_SIZE;
+    }
 }

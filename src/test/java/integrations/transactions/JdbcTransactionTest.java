@@ -28,9 +28,7 @@ import testing.embedded.base.h2.TestDataBase;
 import diarsid.jdbc.transactions.JdbcConnectionsSource;
 import diarsid.jdbc.transactions.JdbcTransaction;
 import diarsid.jdbc.transactions.Row;
-import diarsid.jdbc.transactions.core.JdbcPreparedStatementSetter;
 import diarsid.jdbc.transactions.core.JdbcTransactionFactory;
-import diarsid.jdbc.transactions.core.JdbcTransactionGuard;
 import diarsid.jdbc.transactions.exceptions.TransactionHandledException;
 import diarsid.jdbc.transactions.exceptions.TransactionHandledSQLException;
 import diarsid.jdbc.transactions.exceptions.TransactionTerminationException;
@@ -45,6 +43,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import static diarsid.jdbc.transactions.core.JdbcTransactionFactoryBuilder.buildTransactionFactoryWith;
 import static diarsid.jdbc.transactions.core.Params.params;
 
 
@@ -149,11 +148,10 @@ public class JdbcTransactionTest {
     }
 
     private static void setupTransactionsFactory() {
-        JdbcConnectionsSource source = new JdbcConnectionsSourceTestBase(TEST_BASE);        
-        JdbcTransactionGuard transactionGuard = new JdbcTransactionGuard(1);
-        JdbcPreparedStatementSetter paramsSetter = new JdbcPreparedStatementSetter();
-        TRANSACTION_FACTORY = new JdbcTransactionFactory(
-                source, transactionGuard, paramsSetter);
+        JdbcConnectionsSource source = new JdbcConnectionsSourceTestBase(TEST_BASE);
+        TRANSACTION_FACTORY = buildTransactionFactoryWith(source)
+                .withGuardWaitingOnSeconds(1)
+                .done();
     }
     
     static JdbcTransaction createTransaction() throws TransactionHandledSQLException {
@@ -289,7 +287,7 @@ public class JdbcTransactionTest {
                 4, "name_4", 40, false); 
         sleep(2000); 
         // transaction has not been committed or rolled back properly.
-        // it will be rolled back, restored and closed by JdbcTransactionGuard.
+        // it will be rolled back, restored and closed by JdbcTransactionGuardReal.
         
         assertTrue(TEST_BASE.ifAllConnectionsReleased());
         

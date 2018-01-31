@@ -8,7 +8,6 @@ package diarsid.jdbc.transactions.core;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.concurrent.ScheduledFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,18 +31,7 @@ public class JdbcTransactionFactory {
     private final SqlHistoryFormattingAlgorithm sqlHistoryFormattingAlgorithm;
     private boolean logHistory;
     
-    public JdbcTransactionFactory(
-            JdbcConnectionsSource connectionsSource, 
-            JdbcTransactionGuard transactionGuard,
-            JdbcPreparedStatementSetter argsSetter) {
-        this.connectionsSource = connectionsSource;
-        this.transactionGuard = transactionGuard;
-        this.argsSetter = argsSetter;
-        this.sqlHistoryFormattingAlgorithm = new StandardSqlHistoryFormattingAlgorithm();
-        this.logHistory = false;
-    }
-    
-    public JdbcTransactionFactory(
+    JdbcTransactionFactory(
             JdbcConnectionsSource connectionsSource, 
             JdbcTransactionGuard transactionGuard,
             JdbcPreparedStatementSetter argsSetter, 
@@ -82,7 +70,7 @@ public class JdbcTransactionFactory {
         JdbcTransactionSqlHistoryRecorder sqlHistoryRecorder =
                 new JdbcTransactionSqlHistoryRecorder(this.sqlHistoryFormattingAlgorithm);
         connection.setAutoCommit(false);
-        ScheduledFuture connectionTearDown =
+        Runnable connectionTearDown =
             this.transactionGuard.accept(connection, sqlHistoryRecorder);
         return new JdbcTransactionWrapper(
                 connection, 
