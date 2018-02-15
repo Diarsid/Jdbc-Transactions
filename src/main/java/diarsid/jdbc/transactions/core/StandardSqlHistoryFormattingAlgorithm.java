@@ -46,7 +46,8 @@ class StandardSqlHistoryFormattingAlgorithm implements SqlHistoryFormattingAlgor
                 .replaceAll("(order by|ORDER BY)", LINE_SEPARATOR_TAB + "ORDER BY")
                 .replaceAll("(values|VALUES)", LINE_SEPARATOR_TAB + "VALUES")
                 .replaceAll("(having|HAVING)", LINE_SEPARATOR_TAB + "VALUES")
-                .replace(parametersLineTabSign + "(", LINE_SEPARATOR + TAB_TAB + "(")
+                .replaceAll("(join|JOIN)", LINE_SEPARATOR_TAB_TAB + "JOIN")
+                .replace(parametersLineTabSign + "(", LINE_SEPARATOR_TAB_TAB + "(")
                 .replace(TAB, "    ");
     }
 }
