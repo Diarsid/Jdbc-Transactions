@@ -44,14 +44,6 @@ class JdbcTransactionStub implements JdbcTransaction {
         return "";
     }
     
-    private <T> Optional<T> operationNotPerformedOptionalValue(Class<T> type) {
-        return Optional.empty();
-    }    
-    
-    private <T> Stream<T> operationNotPerformedEmptyStream(Class<T> type) {
-        return Stream.empty();
-    }
-    
     @Override
     public void close() {
         this.commit();
@@ -132,74 +124,74 @@ class JdbcTransactionStub implements JdbcTransaction {
     }
 
     @Override
-    public void doQueryVarargParams(String sql, RowOperation operation, Object... params) 
+    public void doQueryVarargParams(RowOperation operation, String sql, Object... params) 
             throws TransactionHandledSQLException {
         // do nothing;
     }
 
     @Override
-    public void doQuery(String sql, RowOperation operation, List<? extends Object> params) 
+    public void doQuery(RowOperation operation, String sql, List<? extends Object> params) 
             throws TransactionHandledSQLException {
         // do nothing; 
     }
 
     @Override
-    public void doQuery(String sql, RowOperation operation, Params params) 
+    public void doQuery(RowOperation operation, String sql, Params params) 
             throws TransactionHandledSQLException {
         // do nothing; 
     }
     
     @Override
     public <T> Stream<T> doQueryAndStream(
-            Class<T> type, String sql, RowConversion<T> conversion) 
+            RowConversion<T> conversion, String sql) 
             throws TransactionHandledSQLException {
-        return this.operationNotPerformedEmptyStream(type);
+        return Stream.empty();
     }
     
     @Override
     public <T> Stream<T> doQueryAndStreamVarargParams(
-            Class<T> type, String sql, RowConversion<T> conversion, Object... params) 
+            RowConversion<T> conversion, String sql, Object... params) 
             throws TransactionHandledSQLException {
-        return this.operationNotPerformedEmptyStream(type);
+        return Stream.empty();
     }
     
     @Override
     public <T> Stream<T> doQueryAndStream(
-            Class<T> type, String sql, RowConversion<T> conversion, List<? extends Object> params) 
+            RowConversion<T> conversion, String sql, List<? extends Object> params) 
             throws TransactionHandledSQLException {
-        return this.operationNotPerformedEmptyStream(type);
+        return Stream.empty();
     }
     
     @Override
     public <T> Stream<T> doQueryAndStream(
-            Class<T> type, String sql, RowConversion<T> conversion, Params params) 
+            RowConversion<T> conversion, String sql, Params params) 
             throws TransactionHandledSQLException {
-        return this.operationNotPerformedEmptyStream(type);
+        return Stream.empty();
     }
     
     @Override
-    public void doQueryAndProcessFirstRow(String sql, RowOperation operation) 
+    public void doQueryAndProcessFirstRow(RowOperation operation, String sql) 
             throws TransactionHandledSQLException {
         // do nothing; 
     }
     
     @Override
     public void doQueryAndProcessFirstRowVarargParams(
-            String sql, RowOperation operation, Object... params) 
+            RowOperation operation, String sql, Object... params) 
             throws TransactionHandledSQLException {
         // do nothing; 
     }
     
     @Override
     public void doQueryAndProcessFirstRow(
-            String sql, RowOperation operation, List<? extends Object> params) 
+            RowOperation operation, String sql, List<? extends Object> params) 
             throws TransactionHandledSQLException {
         // do nothing; 
     }
     
     @Override
     public void doQueryAndProcessFirstRow(
-            String sql, RowOperation operation, Params params) 
+            RowOperation operation, String sql, Params params) 
             throws TransactionHandledSQLException {
         // do nothing; 
     }
@@ -212,34 +204,34 @@ class JdbcTransactionStub implements JdbcTransaction {
     
     @Override
     public <T> Optional<T> doQueryAndConvertFirstRow(
-            Class<T> type, String sql, RowConversion<T> conversion) 
+            RowConversion<T> conversion, String sql) 
             throws TransactionHandledSQLException {
-        return this.operationNotPerformedOptionalValue(type);
+        return Optional.empty();
     }
     
     @Override
     public <T> Optional<T> doQueryAndConvertFirstRowVarargParams(
-            Class<T> type, String sql, RowConversion<T> conversion, Object... params) 
+            RowConversion<T> conversion, String sql, Object... params) 
             throws TransactionHandledSQLException {
-        return this.operationNotPerformedOptionalValue(type);
+        return Optional.empty();
     }
     
     @Override
     public <T> Optional<T> doQueryAndConvertFirstRow(
-            Class<T> type, String sql, RowConversion<T> conversion, List<? extends Object> params) 
+            RowConversion<T> conversion, String sql, List<? extends Object> params) 
             throws TransactionHandledSQLException {
-        return this.operationNotPerformedOptionalValue(type);
+        return Optional.empty();
     }
     
     @Override
     public <T> Optional<T> doQueryAndConvertFirstRow(
-            Class<T> type, String sql, RowConversion<T> conversion, Params params) 
+            RowConversion<T> conversion, String sql, Params params) 
             throws TransactionHandledSQLException {
-        return this.operationNotPerformedOptionalValue(type);
+        return Optional.empty();
     }
 
     @Override
-    public void doQuery(String sql, RowOperation operation) 
+    public void doQuery(RowOperation operation, String sql) 
             throws TransactionHandledSQLException {
         // do nothing;
     }

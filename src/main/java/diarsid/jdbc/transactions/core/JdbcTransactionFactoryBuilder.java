@@ -5,8 +5,11 @@
  */
 package diarsid.jdbc.transactions.core;
 
+import java.util.function.Function;
+
 import diarsid.jdbc.transactions.JdbcConnectionsSource;
-import diarsid.jdbc.transactions.SqlHistoryFormattingAlgorithm;
+import diarsid.jdbc.transactions.core.sqlhistory.FormattingAlgorithm;
+import diarsid.jdbc.transactions.core.sqlhistory.FormattingAlgorithmStandardImpl;
 
 import static java.util.Objects.isNull;
 
@@ -19,7 +22,7 @@ public class JdbcTransactionFactoryBuilder {
     private final JdbcConnectionsSource connectionsSource;
     private JdbcTransactionGuard transactionGuard;
     private JdbcPreparedStatementParamSetter[] additionalSetters;
-    private SqlHistoryFormattingAlgorithm algorithm;
+    private Function<String, FormattingAlgorithm> formattingAlgorithmProducer;
     
     private JdbcTransactionFactoryBuilder(JdbcConnectionsSource connectionsSource) {
         this.connectionsSource = connectionsSource;
@@ -44,14 +47,15 @@ public class JdbcTransactionFactoryBuilder {
     }
     
     public JdbcTransactionFactoryBuilder withSqlHistoryFormattingAlgorithm(
-            SqlHistoryFormattingAlgorithm algorithm) {
-        this.algorithm = algorithm;
+            Function<String, FormattingAlgorithm> formattingAlgorithmProducer) {
+        this.formattingAlgorithmProducer = formattingAlgorithmProducer;
         return this;
     }
     
     public JdbcTransactionFactory done() {
-        if ( isNull(this.algorithm) ) {
-            this.algorithm = new StandardSqlHistoryFormattingAlgorithm();
+        if ( isNull(this.formattingAlgorithmProducer) ) {
+            this.formattingAlgorithmProducer = 
+                    (paramsLineTabSign) -> new FormattingAlgorithmStandardImpl(paramsLineTabSign);
         }
         if ( isNull(this.transactionGuard) ) {
             this.transactionGuard = new JdbcTransactionGuardMock();
@@ -59,6 +63,6 @@ public class JdbcTransactionFactoryBuilder {
         
         JdbcPreparedStatementSetter setter = new JdbcPreparedStatementSetter(additionalSetters);
         return new JdbcTransactionFactory(
-                this.connectionsSource, this.transactionGuard, setter, this.algorithm);
+                this.connectionsSource, this.transactionGuard, setter, this.formattingAlgorithmProducer);
     }
 }

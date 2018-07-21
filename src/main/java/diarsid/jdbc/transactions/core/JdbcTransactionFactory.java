@@ -8,14 +8,18 @@ package diarsid.jdbc.transactions.core;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import diarsid.jdbc.transactions.JdbcConnectionsSource;
 import diarsid.jdbc.transactions.JdbcTransaction;
-import diarsid.jdbc.transactions.SqlHistoryFormattingAlgorithm;
+import diarsid.jdbc.transactions.core.sqlhistory.FormattingAlgorithm;
+import diarsid.jdbc.transactions.core.sqlhistory.SqlHistoryRecorder;
 import diarsid.jdbc.transactions.exceptions.TransactionHandledSQLException;
+
+import static diarsid.jdbc.transactions.core.sqlhistory.SqlHistory.getSqlHistoryRecorder;
 
 /**
  *
@@ -28,18 +32,18 @@ public class JdbcTransactionFactory {
     private final JdbcConnectionsSource connectionsSource;
     private final JdbcTransactionGuard transactionGuard;
     private final JdbcPreparedStatementSetter argsSetter;
-    private final SqlHistoryFormattingAlgorithm sqlHistoryFormattingAlgorithm;
+    private final Function<String, FormattingAlgorithm> formattingAlgorithmProducer;
     private boolean logHistory;
     
     JdbcTransactionFactory(
             JdbcConnectionsSource connectionsSource, 
             JdbcTransactionGuard transactionGuard,
             JdbcPreparedStatementSetter argsSetter, 
-            SqlHistoryFormattingAlgorithm sqlHistoryFormattingAlgorithm) {
+            Function<String, FormattingAlgorithm> formattingAlgorithmProducer) {
         this.connectionsSource = connectionsSource;
         this.transactionGuard = transactionGuard;
         this.argsSetter = argsSetter;
-        this.sqlHistoryFormattingAlgorithm = sqlHistoryFormattingAlgorithm;
+        this.formattingAlgorithmProducer = formattingAlgorithmProducer;
         this.logHistory = false;
     }
     
@@ -67,8 +71,8 @@ public class JdbcTransactionFactory {
 
     private JdbcTransaction setNewTransaction() throws SQLException {
         Connection connection = connectionsSource.getConnection();
-        JdbcTransactionSqlHistoryRecorder sqlHistoryRecorder =
-                new JdbcTransactionSqlHistoryRecorder(this.sqlHistoryFormattingAlgorithm);
+        SqlHistoryRecorder sqlHistoryRecorder = 
+                getSqlHistoryRecorder(this.formattingAlgorithmProducer);
         connection.setAutoCommit(false);
         Runnable connectionTearDown =
             this.transactionGuard.accept(connection, sqlHistoryRecorder);

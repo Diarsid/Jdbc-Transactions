@@ -27,12 +27,10 @@ class JdbcTransactionDisposableWrapper implements JdbcTransaction {
     
     private final JdbcTransaction wrappedTransaction;
     private final SingleUsageMarker marker;
-    private String sqlHistory;
     
     JdbcTransactionDisposableWrapper(JdbcTransaction actualTransaction) {
         this.wrappedTransaction = actualTransaction;
         this.marker = new SingleUsageMarker();
-        this.sqlHistory = "[EMPTY]";
     }
     
     private void checkIfNotUsed() {
@@ -46,14 +44,12 @@ class JdbcTransactionDisposableWrapper implements JdbcTransaction {
     private void commitTransactionAndMarkAsUsed() 
             throws TransactionHandledSQLException, TransactionHandledException {
         this.marker.markUsed();
-        this.sqlHistory = this.wrappedTransaction.getSqlHistory();
         this.wrappedTransaction.commit();       
     }
     
     @Override
     public void close() {
         this.marker.markUsed();
-        this.sqlHistory = this.wrappedTransaction.getSqlHistory();
         this.wrappedTransaction.close();
     }
 
@@ -130,74 +126,74 @@ class JdbcTransactionDisposableWrapper implements JdbcTransaction {
     }
 
     @Override
-    public void doQueryVarargParams(String sql, RowOperation operation, Object... params) 
+    public void doQueryVarargParams(RowOperation operation, String sql, Object... params) 
             throws TransactionHandledSQLException, TransactionHandledException {
         this.checkIfNotUsed();
-        this.wrappedTransaction.doQueryVarargParams(sql, operation, params);
+        this.wrappedTransaction.doQueryVarargParams(operation, sql, params);
         this.commitTransactionAndMarkAsUsed();
     }
 
     @Override
-    public void doQuery(String sql, RowOperation operation, List<? extends Object> params) 
+    public void doQuery(RowOperation operation, String sql, List<? extends Object> params) 
             throws TransactionHandledSQLException, TransactionHandledException {
         this.checkIfNotUsed();
-        this.wrappedTransaction.doQuery(sql, operation, params);
+        this.wrappedTransaction.doQuery(operation, sql, params);
         this.commitTransactionAndMarkAsUsed();
     }
 
     @Override
-    public void doQuery(String sql, RowOperation operation, Params params) 
+    public void doQuery(RowOperation operation, String sql, Params params) 
             throws TransactionHandledSQLException, TransactionHandledException {
         this.checkIfNotUsed();
-        this.wrappedTransaction.doQuery(sql, operation, params);
+        this.wrappedTransaction.doQuery(operation, sql, params);
         this.commitTransactionAndMarkAsUsed();
     }
 
     @Override
-    public void doQuery(String sql, RowOperation operation) 
+    public void doQuery(RowOperation operation, String sql) 
             throws TransactionHandledSQLException, TransactionHandledException {
         this.checkIfNotUsed();
-        this.wrappedTransaction.doQuery(sql, operation);
+        this.wrappedTransaction.doQuery(operation, sql);
         this.commitTransactionAndMarkAsUsed();
     }
     
     @Override
     public <T> Stream<T> doQueryAndStream(
-            Class<T> type, String sql, RowConversion<T> conversion) 
+            RowConversion<T> conversion, String sql) 
             throws TransactionHandledSQLException, TransactionHandledException {
         this.checkIfNotUsed();
-        Stream<T> stream = this.wrappedTransaction.doQueryAndStream(type, sql, conversion);
+        Stream<T> stream = this.wrappedTransaction.doQueryAndStream(conversion, sql );
         this.commitTransactionAndMarkAsUsed();
         return stream;
     }
     
     @Override
     public <T> Stream<T> doQueryAndStreamVarargParams(
-            Class<T> type, String sql, RowConversion<T> conversion, Object... params) 
+            RowConversion<T> conversion, String sql, Object... params) 
             throws TransactionHandledSQLException, TransactionHandledException {
         this.checkIfNotUsed();
         Stream<T> stream = this.wrappedTransaction
-                .doQueryAndStreamVarargParams(type, sql, conversion, params);
+                .doQueryAndStreamVarargParams(conversion, sql, params);
         this.commitTransactionAndMarkAsUsed();
         return stream;
     }
     
     @Override
     public <T> Stream<T> doQueryAndStream(
-            Class<T> type, String sql, RowConversion<T> conversion, List<? extends Object> params) 
+            RowConversion<T> conversion, String sql, List<? extends Object> params) 
             throws TransactionHandledSQLException, TransactionHandledException {
         this.checkIfNotUsed();
-        Stream<T> stream = this.wrappedTransaction.doQueryAndStream(type, sql, conversion, params);
+        Stream<T> stream = this.wrappedTransaction.doQueryAndStream(conversion, sql, params);
         this.commitTransactionAndMarkAsUsed();
         return stream;
     }
     
     @Override
     public <T> Stream<T> doQueryAndStream(
-            Class<T> type, String sql, RowConversion<T> conversion, Params params) 
+            RowConversion<T> conversion, String sql, Params params) 
             throws TransactionHandledSQLException, TransactionHandledException {
         this.checkIfNotUsed();
-        Stream<T> stream = this.wrappedTransaction.doQueryAndStream(type, sql, conversion, params);
+        Stream<T> stream = this.wrappedTransaction.doQueryAndStream(conversion, sql, params);
         this.commitTransactionAndMarkAsUsed();
         return stream;
     }
@@ -212,80 +208,80 @@ class JdbcTransactionDisposableWrapper implements JdbcTransaction {
     
     @Override
     public void doQueryAndProcessFirstRow(
-            String sql, RowOperation operation) 
+            RowOperation operation, String sql) 
             throws TransactionHandledSQLException, TransactionHandledException {
         this.checkIfNotUsed();
-        this.wrappedTransaction.doQueryAndProcessFirstRow(sql, operation);
+        this.wrappedTransaction.doQueryAndProcessFirstRow(operation, sql);
         this.commitTransactionAndMarkAsUsed();
     }
     
     @Override
     public void doQueryAndProcessFirstRowVarargParams(
-            String sql, RowOperation operation, Object... params) 
+            RowOperation operation, String sql, Object... params) 
             throws TransactionHandledSQLException, TransactionHandledException {
         this.checkIfNotUsed();
-        this.wrappedTransaction.doQueryAndProcessFirstRowVarargParams(sql, operation, params);
+        this.wrappedTransaction.doQueryAndProcessFirstRowVarargParams(operation, sql, params);
         this.commitTransactionAndMarkAsUsed();
     }
     
     @Override
     public void doQueryAndProcessFirstRow(
-            String sql, RowOperation operation, List<? extends Object> params) 
+            RowOperation operation, String sql, List<? extends Object> params) 
             throws TransactionHandledSQLException, TransactionHandledException {
         this.checkIfNotUsed();
-        this.wrappedTransaction.doQueryAndProcessFirstRow(sql, operation, params);
+        this.wrappedTransaction.doQueryAndProcessFirstRow(operation, sql, params);
         this.commitTransactionAndMarkAsUsed();
     }
     
     @Override
     public void doQueryAndProcessFirstRow(
-            String sql, RowOperation operation, Params params) 
+            RowOperation operation, String sql, Params params) 
             throws TransactionHandledSQLException, TransactionHandledException {
         this.checkIfNotUsed();
-        this.wrappedTransaction.doQueryAndProcessFirstRow(sql, operation, params);
+        this.wrappedTransaction.doQueryAndProcessFirstRow(operation, sql, params);
         this.commitTransactionAndMarkAsUsed();        
     };
     
     @Override
     public <T> Optional<T> doQueryAndConvertFirstRow(
-            Class<T> type, String sql, RowConversion<T> conversion) 
+            RowConversion<T> conversion, String sql) 
             throws TransactionHandledSQLException, TransactionHandledException {
         this.checkIfNotUsed();
         Optional<T> opt = this.wrappedTransaction
-                .doQueryAndConvertFirstRow(type, sql, conversion);
+                .doQueryAndConvertFirstRow(conversion, sql );
         this.commitTransactionAndMarkAsUsed();
         return opt;
     }
     
     @Override
     public <T> Optional<T> doQueryAndConvertFirstRowVarargParams(
-            Class<T> type, String sql, RowConversion<T> conversion, Object... params) 
+            RowConversion<T> conversion, String sql, Object... params) 
             throws TransactionHandledSQLException, TransactionHandledException {
         this.checkIfNotUsed();
         Optional<T> opt = this.wrappedTransaction
-                .doQueryAndConvertFirstRowVarargParams(type, sql, conversion, params);
+                .doQueryAndConvertFirstRowVarargParams(conversion, sql, params);
         this.commitTransactionAndMarkAsUsed();
         return opt;
     }
     
     @Override
     public <T> Optional<T> doQueryAndConvertFirstRow(
-            Class<T> type, String sql, RowConversion<T> conversion, List<? extends Object> params) 
+            RowConversion<T> conversion, String sql, List<? extends Object> params) 
             throws TransactionHandledSQLException, TransactionHandledException {
         this.checkIfNotUsed();
         Optional<T> opt = this.wrappedTransaction
-                .doQueryAndConvertFirstRow(type, sql, conversion, params);
+                .doQueryAndConvertFirstRow(conversion, sql, params);
         this.commitTransactionAndMarkAsUsed();
         return opt;
     }
     
     @Override
     public <T> Optional<T> doQueryAndConvertFirstRow(
-            Class<T> type, String sql, RowConversion<T> conversion, Params params) 
+            RowConversion<T> conversion, String sql, Params params) 
             throws TransactionHandledSQLException, TransactionHandledException {
         this.checkIfNotUsed();
         Optional<T> opt = this.wrappedTransaction
-                .doQueryAndConvertFirstRow(type, sql, conversion, params);
+                .doQueryAndConvertFirstRow(conversion, sql, params);
         this.commitTransactionAndMarkAsUsed();
         return opt;
     }
@@ -397,7 +393,7 @@ class JdbcTransactionDisposableWrapper implements JdbcTransaction {
         try {
             this.commitTransactionAndMarkAsUsed();
         } finally {
-            return this.sqlHistory;
+            return this.wrappedTransaction.getSqlHistory();
         }
     }
 }

@@ -149,7 +149,7 @@ public class SingleCaseExplorationTest {
     }
     
     static JdbcTransaction createDisposableTransaction() throws TransactionHandledSQLException {
-        return TRANSACTION_FACTORY.createDisposableTransaction();
+        return TRANSACTION_FACTORY.createDisposableTransaction().logHistoryAfterCommit();
     }
     
     public void doBad() {
@@ -164,14 +164,13 @@ public class SingleCaseExplorationTest {
         try ( JdbcTransaction transact = createDisposableTransaction() ) {
             List<String> list = transact
                     .doQueryAndStreamVarargParams(
-                            int.class,
-                            "SELECT * " +
-                            "FROM table_2 " +
-                            "WHERE ( label LIKE ? ) AND ( label LIKE ? )",
                             (row) -> {
                                 doBad();
                                 return ( int ) row.get("index");
                             },
+                            "SELECT * " +
+                            "FROM table_2 " +
+                            "WHERE ( label LIKE ? ) AND ( label LIKE ? )",
                             "%m%", "%na%")
                             .map(i -> String.valueOf(i) + ": index")
                             .collect(toList());

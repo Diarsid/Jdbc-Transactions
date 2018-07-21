@@ -5,21 +5,24 @@
  */
 package diarsid.jdbc.transactions.core;
 
+
 import java.sql.Connection;
 import java.util.concurrent.TimeUnit;
+
+import diarsid.jdbc.transactions.core.sqlhistory.SqlHistoryRecorder;
 
 
 public class JdbcTransactionGuardMock implements JdbcTransactionGuard {
 
     @Override
     public Runnable accept(
-            Connection connection, JdbcTransactionSqlHistoryRecorder sqlHistory) {
+            Connection connection, SqlHistoryRecorder sqlHistory) {
         return null;
     }
 
     @Override
     public Runnable accept(
-            Connection connection, JdbcTransactionSqlHistoryRecorder sqlHistory, int timeout, TimeUnit unit) {
+            Connection connection, SqlHistoryRecorder sqlHistory, int timeout, TimeUnit unit) {
         return null;
     }
 

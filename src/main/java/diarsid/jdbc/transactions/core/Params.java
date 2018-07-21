@@ -40,7 +40,7 @@ public class Params {
         return new Params(params.stream().collect(toList()));
     }
     
-    List<Object> list() {
+    public List<Object> list() {
         return this.params;
     }
     

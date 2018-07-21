@@ -8,17 +8,19 @@ package diarsid.jdbc.transactions.core;
 import java.sql.Connection;
 import java.util.concurrent.TimeUnit;
 
+import diarsid.jdbc.transactions.core.sqlhistory.SqlHistoryRecorder;
+
 /**
  *
  * @author Diarsid
  */
 interface JdbcTransactionGuard {
 
-    Runnable accept(Connection connection, JdbcTransactionSqlHistoryRecorder sqlHistory);
+    Runnable accept(Connection connection, SqlHistoryRecorder sqlHistory);
 
     Runnable accept(
             Connection connection, 
-            JdbcTransactionSqlHistoryRecorder sqlHistory, 
+            SqlHistoryRecorder sqlHistory, 
             int timeout, 
             TimeUnit unit);
 

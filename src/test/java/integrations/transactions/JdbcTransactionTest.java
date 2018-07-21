@@ -155,11 +155,11 @@ public class JdbcTransactionTest {
     }
     
     static JdbcTransaction createTransaction() throws TransactionHandledSQLException {
-        return TRANSACTION_FACTORY.createTransaction();
+        return TRANSACTION_FACTORY.createTransaction().logHistoryAfterCommit();
     }
     
     static JdbcTransaction createDisposableTransaction() throws TransactionHandledSQLException {
-        return TRANSACTION_FACTORY.createDisposableTransaction();
+        return TRANSACTION_FACTORY.createDisposableTransaction().logHistoryAfterCommit();
     }
 
     /**
@@ -199,10 +199,11 @@ public class JdbcTransactionTest {
     @Test
     public void testDoQuery_3args_1() throws Exception {
         JdbcTransaction transaction = createTransaction();
-        transaction.doQuery("SELECT * FROM table_1", 
+        transaction.doQuery(
                 (row) -> {
                     this.printDataFromRow(row, "multiple rows processing:");
-                });
+                },
+                "SELECT * FROM table_1");
         transaction.commit();
         
         assertTrue(TEST_BASE.ifAllConnectionsReleased());
@@ -214,10 +215,11 @@ public class JdbcTransactionTest {
     @Test
     public void testDoQuery_3args_2() throws Exception {
         JdbcTransaction transaction = createTransaction();
-        transaction.doQueryVarargParams("SELECT * FROM table_1 WHERE label LIKE ? ", 
+        transaction.doQueryVarargParams( 
                 (row) -> {
                     this.printDataFromRow(row, "multiple rows processing:");
                 },
+                "SELECT * FROM table_1 WHERE label LIKE ? ",
                 "ame_1");
         transaction.commit();
         
@@ -298,6 +300,7 @@ public class JdbcTransactionTest {
     /**
      * Test of doUpdate method, of class JdbcTransactionWrapper.
      */
+    // fix!!!1
     @Test()
     public void testDoUpdate_String_Params() throws Exception {
         int qtyBefore = TEST_BASE.countRowsInTable("table_1");
@@ -326,6 +329,34 @@ public class JdbcTransactionTest {
             int qtyAfter = TEST_BASE.countRowsInTable("table_1");
             assertEquals(3, qtyAfter);
         }
+    }
+    
+    @Test()
+    public void testDoUpdate_String_Params_success() throws Exception {
+        int qtyBefore = TEST_BASE.countRowsInTable("table_1");
+        assertEquals(3, qtyBefore);
+        
+        JdbcTransaction transaction = createTransaction();
+        transaction.doBatchUpdateVarargParams(
+                TABLE_1_INSERT,
+                params(4, "name_4", 40, false),
+                params(5, "name_5", 50, false),
+                params(6, "name_6", 60, false));            
+
+        transaction.doBatchUpdateVarargParams(
+                TABLE_1_INSERT,
+                params(7, "name_7", 740, false),
+                params(8, "name_8", 70, false));
+
+        transaction.doUpdateVarargParams(
+                TABLE_1_INSERT,
+                9, "name_7", 70, false); 
+        
+        transaction.commit();
+            
+        assertTrue(TEST_BASE.ifAllConnectionsReleased());
+        int qtyAfter = TEST_BASE.countRowsInTable("table_1");
+        assertEquals(9, qtyAfter);
     }
 
     /**
@@ -584,13 +615,12 @@ public class JdbcTransactionTest {
         assertEquals(3, qty);
         
         List<String> list = createDisposableTransaction()
-                .doQueryAndStream(                        
-                        int.class,
-                        "SELECT * " +
-                        "FROM table_1", 
+                .doQueryAndStream(
                         (row) -> {
                             return (int) row.get("index");
-                        })
+                        },
+                        "SELECT * " +
+                        "FROM table_1")
                 .filter(i -> i > 0)
                 .map(i -> String.valueOf(i) + ": index")
                 .collect(toList());
@@ -610,15 +640,14 @@ public class JdbcTransactionTest {
         
         List<String> list = createDisposableTransaction()
                 .doQueryAndStreamVarargParams(
-                        int.class,
+                        (row) -> {
+                            return (int) row.get("index");
+                        },
                         "SELECT * " +
                         "FROM table_1 " +
                         "WHERE  ( id IS ? ) AND " +
                         "       ( label LIKE ? ) AND ( label LIKE ? ) AND ( label LIKE ? ) " +
-                        "       AND ( active IS ? ) ", 
-                        (row) -> {
-                            return (int) row.get("index");
-                        },
+                        "       AND ( active IS ? ) ",                        
                         1, labelPatterns, true)
                 .map(i -> String.valueOf(i) + ": index")
                 .collect(toList());
@@ -636,13 +665,12 @@ public class JdbcTransactionTest {
         
         List<String> list = createDisposableTransaction()
                 .doQueryAndStreamVarargParams(
-                        int.class,
-                        "SELECT * " +
-                        "FROM table_1 " +
-                        "WHERE ( label LIKE ? ) AND ( label LIKE ? )", 
                         (row) -> {
                             return (int) row.get("index");
                         },
+                        "SELECT * " +
+                        "FROM table_1 " +
+                        "WHERE ( label LIKE ? ) AND ( label LIKE ? )", 
                         "%m%", "%na%")
                 .map(i -> String.valueOf(i) + ": index")
                 .collect(toList());
@@ -677,31 +705,32 @@ public class JdbcTransactionTest {
     public void firstRowProcessTest() throws Exception {
         createDisposableTransaction()
                 .doQueryAndProcessFirstRow(
-                        "SELECT TOP 1 * " +
-                        "FROM table_1 " +
-                        "ORDER BY index ", 
                         (firstRow) -> {
                             this.printDataFromRow(firstRow, "first row processing");
-                        });
+                        },
+                        "SELECT TOP 1 * " +
+                        "FROM table_1 " +
+                        "ORDER BY index ");
         assertTrue(TEST_BASE.ifAllConnectionsReleased());
     }
     
     @Test
     public void firstRowConvertTest() throws Exception {
         String s = createDisposableTransaction().doQueryAndConvertFirstRow(
-                String.class,
-                "SELECT TOP 1 * " +
-                "FROM table_1 " +
-                "ORDER BY index ", 
                 (firstRow) -> { 
                     return (String) firstRow.get("label");
-                }).get();        
+                },
+                "SELECT TOP 1 * " +
+                "FROM table_1 " +
+                "ORDER BY index "
+        ).get();        
         
         assertTrue(TEST_BASE.ifAllConnectionsReleased());
         
         assertEquals(row_1_label, s);
     }
     
+    // fix
     @Test
     public void firstRowConvertTest_empty() throws Exception {
         clearData();
@@ -709,13 +738,12 @@ public class JdbcTransactionTest {
         try (JdbcTransaction transact = createDisposableTransaction()) {
             s = transact
                     .doQueryAndConvertFirstRow(
-                            String.class,
-                            "SELECT MIN(index) AS index " +
-                            "FROM table_1 " +
-                            "ORDER BY index ",
                             (firstRow) -> { 
                                 return String.valueOf(( int ) firstRow.get("index"));
-                            });
+                            },
+                            "SELECT MIN(index) AS index " +
+                            "FROM table_1 " +
+                            "ORDER BY index ");
             fail();
         } catch (TransactionHandledSQLException | 
                 TransactionHandledException transactionHandledSQLException) {

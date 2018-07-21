@@ -14,6 +14,7 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import diarsid.jdbc.transactions.core.sqlhistory.SqlHistoryRecorder;
 import diarsid.jdbc.transactions.exceptions.JdbcFailureException;
 
 import static java.lang.String.format;
@@ -37,7 +38,7 @@ class JdbcTransactionGuardReal implements JdbcTransactionGuard {
     
     @Override
     public Runnable accept(
-            Connection connection, JdbcTransactionSqlHistoryRecorder sqlHistory) {
+            Connection connection, SqlHistoryRecorder sqlHistory) {
         ScheduledFuture scheduledTearDown = this.scheduler.schedule(
                 this.delayedTearDownOf(connection, sqlHistory), this.transactionTimeout, SECONDS);
         return () -> scheduledTearDown.cancel(true);
@@ -46,7 +47,7 @@ class JdbcTransactionGuardReal implements JdbcTransactionGuard {
     @Override
     public Runnable accept(
             Connection connection, 
-            JdbcTransactionSqlHistoryRecorder sqlHistory, 
+            SqlHistoryRecorder sqlHistory, 
             int timeout, 
             TimeUnit unit) {
         ScheduledFuture scheduledTearDown = this.scheduler.schedule(
@@ -55,7 +56,7 @@ class JdbcTransactionGuardReal implements JdbcTransactionGuard {
     }
     
     private Runnable delayedTearDownOf(
-            Connection connection, JdbcTransactionSqlHistoryRecorder sqlHistory) {
+            Connection connection, SqlHistoryRecorder sqlHistory) {
         return () -> {
             try {
                 logger.warn("Transaction has not been committed or rolled back properly.");
