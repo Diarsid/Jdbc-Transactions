@@ -35,10 +35,12 @@ class JdbcPreparedStatementSetter {
         defaultSetters.add(new ParamSetterString());
         defaultSetters.add(new ParamSetterBool());
         defaultSetters.add(new ParamSetterInt());
+        defaultSetters.add(new ParamSetterLong());
         defaultSetters.add(new ParamSetterByteArray());
         defaultSetters.add(new ParamSetterBinaryStream());
         defaultSetters.add(new ParamSetterLocalDateTime());
         defaultSetters.add(new ParamSetterEnum());
+        defaultSetters.add(new ParamSetterUUID());
         if ( nonNull(additionalSetters) && additionalSetters.length > 0 ) {
             defaultSetters.addAll(asList(additionalSetters));
         }
