@@ -6,11 +6,9 @@
 
 package diarsid.jdbc.transactions.core.sqlhistory;
 
-import java.util.ArrayList;
-import java.util.List;
+import diarsid.support.strings.replace.Replace;
 
-import static diarsid.jdbc.transactions.core.sqlhistory.StringBuilderReplacer.regexReplacer;
-import static diarsid.jdbc.transactions.core.sqlhistory.StringBuilderReplacer.stringReplacer;
+import static diarsid.support.strings.replace.Replace.replace;
 
 
 public class FormattingAlgorithmStandardImpl extends FormattingAlgorithm {
@@ -32,40 +30,38 @@ public class FormattingAlgorithmStandardImpl extends FormattingAlgorithm {
     }
     
     private final String parametersLineTabSign;
-    private final List<StringBuilderReplacer> replacers;
+    private final Replace replace;
     
     public FormattingAlgorithmStandardImpl(String parametersLineTabSign) {
         super(parametersLineTabSign);
         this.parametersLineTabSign = parametersLineTabSign;
-        this.replacers = new ArrayList<>();
-        this.replacers.add(regexReplacer("\\s+", " "));
-        this.replacers.add(regexReplacer("[" + LINE_SEPARATOR + "]+", ""));
-        this.replacers.add(regexReplacer("[\\[]+", "\n["));
-        this.replacers.add(regexReplacer("(all|ALL)", "ALL"));
-        this.replacers.add(regexReplacer("(union|UNION)", LINE_SEPARATOR_TAB_TAB + "UNION"));
-        this.replacers.add(regexReplacer("(insert|INSERT)", LINE_SEPARATOR_TAB + "INSERT"));
-        this.replacers.add(regexReplacer("(delete|DELETE)", LINE_SEPARATOR_TAB + "DELETE"));
-        this.replacers.add(regexReplacer("(update|UPDATE)", LINE_SEPARATOR_TAB + "UPDATE"));
-        this.replacers.add(regexReplacer("(set|SET)", LINE_SEPARATOR_TAB + "SET"));
-        this.replacers.add(regexReplacer("(select|SELECT)", LINE_SEPARATOR_TAB + "SELECT"));
-        this.replacers.add(regexReplacer("(where|WHERE)", LINE_SEPARATOR_TAB + "WHERE"));
-        this.replacers.add(regexReplacer("(from|FROM)", LINE_SEPARATOR_TAB + "FROM"));
-        this.replacers.add(regexReplacer("(group by|GROUP BY)", LINE_SEPARATOR_TAB + "GROUP BY"));
-        this.replacers.add(regexReplacer("(order by|ORDER BY)", LINE_SEPARATOR_TAB + "ORDER BY"));
-        this.replacers.add(regexReplacer("(values|VALUES)", LINE_SEPARATOR_TAB + "VALUES"));
-        this.replacers.add(regexReplacer("(having|HAVING)", LINE_SEPARATOR_TAB + "VALUES"));
-        this.replacers.add(regexReplacer("(join|JOIN)", LINE_SEPARATOR_TAB_TAB + "JOIN"));
-        this.replacers.add(regexReplacer("(case|CASE)", LINE_SEPARATOR_TAB_TAB + "CASE"));
-        this.replacers.add(regexReplacer("(limit|LIMIT)", LINE_SEPARATOR_TAB + "LIMIT"));
-        this.replacers.add(stringReplacer(this.parametersLineTabSign + "(", LINE_SEPARATOR_TAB_TAB + "("));
-        this.replacers.add(stringReplacer(TAB, "    "));
+        this.replace = replace()
+                .regexToString("\\s+", " ")
+                .regexToString("[" + LINE_SEPARATOR + "]+", "")
+                .regexToString("[\\[]+", "\n[")
+                .regexToString("(all|ALL)", "ALL")
+                .regexToString("(union|UNION)", LINE_SEPARATOR_TAB_TAB + "UNION")
+                .regexToString("(insert|INSERT)", LINE_SEPARATOR_TAB + "INSERT")
+                .regexToString("(delete|DELETE)", LINE_SEPARATOR_TAB + "DELETE")
+                .regexToString("(update|UPDATE)", LINE_SEPARATOR_TAB + "UPDATE")
+                .regexToString("(set|SET)", LINE_SEPARATOR_TAB + "SET")
+                .regexToString("(select|SELECT)", LINE_SEPARATOR_TAB + "SELECT")
+                .regexToString("(where|WHERE)", LINE_SEPARATOR_TAB + "WHERE")
+                .regexToString("(from|FROM)", LINE_SEPARATOR_TAB + "FROM")
+                .regexToString("(group by|GROUP BY)", LINE_SEPARATOR_TAB + "GROUP BY")
+                .regexToString("(order by|ORDER BY)", LINE_SEPARATOR_TAB + "ORDER BY")
+                .regexToString("(values|VALUES)", LINE_SEPARATOR_TAB + "VALUES")
+                .regexToString("(having|HAVING)", LINE_SEPARATOR_TAB + "VALUES")
+                .regexToString("(join|JOIN)", LINE_SEPARATOR_TAB_TAB + "JOIN")
+                .regexToString("(case|CASE)", LINE_SEPARATOR_TAB_TAB + "CASE")
+                .regexToString("(limit|LIMIT)", LINE_SEPARATOR_TAB + "LIMIT")
+                .stringToString(this.parametersLineTabSign + "(", LINE_SEPARATOR_TAB_TAB + "(")
+                .stringToString(TAB, "    ");
     }
     
     @Override
     public String formatSql(StringBuilder historyBuilder) {
-        for (int i = 0; i < this.replacers.size(); i++) {
-            replacers.get(i).replaceIn(historyBuilder);
-        }
+        this.replace.doIn(historyBuilder);
         return historyBuilder.toString();
     }
     
