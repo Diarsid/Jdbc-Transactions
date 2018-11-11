@@ -41,6 +41,8 @@ class JdbcPreparedStatementSetter {
         defaultSetters.add(new ParamSetterLocalDateTime());
         defaultSetters.add(new ParamSetterEnum());
         defaultSetters.add(new ParamSetterUUID());
+        defaultSetters.add(new ParamSetterFloat());
+        defaultSetters.add(new ParamSetterDouble());
         if ( nonNull(additionalSetters) && additionalSetters.length > 0 ) {
             defaultSetters.addAll(asList(additionalSetters));
         }
