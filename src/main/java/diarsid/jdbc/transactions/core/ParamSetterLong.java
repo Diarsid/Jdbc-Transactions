@@ -23,7 +23,8 @@ class ParamSetterLong implements JdbcPreparedStatementParamSetter {
     }
 
     @Override
-    public void setParameterInto(PreparedStatement statement, int index, Object arg) throws SQLException {
+    public void setParameterInto(PreparedStatement statement, int index, Object arg) 
+            throws SQLException {
         statement.setLong(index, (long) arg);
     }
 }

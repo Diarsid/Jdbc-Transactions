@@ -23,7 +23,8 @@ class ParamSetterDouble implements JdbcPreparedStatementParamSetter {
     }
 
     @Override
-    public void setParameterInto(PreparedStatement statement, int index, Object arg) throws SQLException {
+    public void setParameterInto(PreparedStatement statement, int index, Object arg) 
+            throws SQLException {
         statement.setDouble(index, (double) arg);
     }
 }

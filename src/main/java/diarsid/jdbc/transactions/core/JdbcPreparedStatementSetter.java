@@ -32,6 +32,7 @@ class JdbcPreparedStatementSetter {
     JdbcPreparedStatementSetter(
             JdbcPreparedStatementParamSetter... additionalSetters) {
         Set<JdbcPreparedStatementParamSetter> defaultSetters = new HashSet<>();
+        defaultSetters.add(new ParamSetterNull());
         defaultSetters.add(new ParamSetterString());
         defaultSetters.add(new ParamSetterBool());
         defaultSetters.add(new ParamSetterInt());

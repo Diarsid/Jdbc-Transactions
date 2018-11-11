@@ -10,7 +10,6 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 
-
 class ParamSetterBool implements JdbcPreparedStatementParamSetter {
     
     ParamSetterBool() {

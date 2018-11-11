@@ -12,19 +12,19 @@ import java.sql.SQLException;
  *
  * @author Diarsid
  */
-class ParamSetterFloat implements JdbcPreparedStatementParamSetter {
+class ParamSetterNull implements JdbcPreparedStatementParamSetter {
     
-    ParamSetterFloat() {
+    ParamSetterNull() {
     }
 
     @Override
     public boolean applicableTo(Object o) {
-        return ( o instanceof Float );
+        return ( o == null );
     }
 
     @Override
     public void setParameterInto(PreparedStatement statement, int index, Object arg) 
             throws SQLException {
-        statement.setFloat(index, (float) arg);
+        statement.setObject(index, null);
     }
 }
