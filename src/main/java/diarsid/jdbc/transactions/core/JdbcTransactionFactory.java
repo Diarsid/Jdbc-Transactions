@@ -32,17 +32,20 @@ public class JdbcTransactionFactory {
     private final JdbcConnectionsSource connectionsSource;
     private final JdbcTransactionGuard transactionGuard;
     private final JdbcPreparedStatementSetter argsSetter;
+    private final SqlTypeToJavaTypeConverter sqlTypeToJavaTypeConverter;
     private final Function<String, FormattingAlgorithm> formattingAlgorithmProducer;
     private boolean logHistory;
     
     JdbcTransactionFactory(
             JdbcConnectionsSource connectionsSource, 
             JdbcTransactionGuard transactionGuard,
-            JdbcPreparedStatementSetter argsSetter, 
+            JdbcPreparedStatementSetter argsSetter,
+            SqlTypeToJavaTypeConverter sqlTypeToJavaTypeConverter,
             Function<String, FormattingAlgorithm> formattingAlgorithmProducer) {
         this.connectionsSource = connectionsSource;
         this.transactionGuard = transactionGuard;
         this.argsSetter = argsSetter;
+        this.sqlTypeToJavaTypeConverter = sqlTypeToJavaTypeConverter;
         this.formattingAlgorithmProducer = formattingAlgorithmProducer;
         this.logHistory = false;
     }
@@ -80,6 +83,7 @@ public class JdbcTransactionFactory {
                 connection, 
                 connectionTearDown, 
                 this.argsSetter, 
+                this.sqlTypeToJavaTypeConverter,
                 sqlHistoryRecorder, 
                 this.logHistory);
     }    

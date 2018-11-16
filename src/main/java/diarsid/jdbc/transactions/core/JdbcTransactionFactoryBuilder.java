@@ -62,7 +62,12 @@ public class JdbcTransactionFactoryBuilder {
         }
         
         JdbcPreparedStatementSetter setter = new JdbcPreparedStatementSetter(additionalSetters);
+        SqlTypeToJavaTypeConverter typesConverter = new SqlTypeToJavaTypeConverter();
         return new JdbcTransactionFactory(
-                this.connectionsSource, this.transactionGuard, setter, this.formattingAlgorithmProducer);
+                this.connectionsSource, 
+                this.transactionGuard, 
+                setter, 
+                typesConverter, 
+                this.formattingAlgorithmProducer);
     }
 }

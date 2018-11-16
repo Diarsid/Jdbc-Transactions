@@ -50,6 +50,7 @@ class JdbcTransactionWrapper implements JdbcTransaction {
     private final Connection connection;
     private final Runnable delayedTearDownCancel;
     private final JdbcPreparedStatementSetter paramsSetter;
+    private final SqlTypeToJavaTypeConverter sqlTypeToJavaTypeConverter;
     private final SqlHistoryRecorder sqlHistory;
     private boolean ifLogSqlHistoryAnyway;
     
@@ -57,11 +58,13 @@ class JdbcTransactionWrapper implements JdbcTransaction {
             Connection connection, 
             Runnable delayedTearDownCancel, 
             JdbcPreparedStatementSetter argsSetter,
+            SqlTypeToJavaTypeConverter sqlTypeToJavaTypeConverter,
             SqlHistoryRecorder sqlHistory, 
             boolean logHistory) {
         this.connection = connection;
         this.delayedTearDownCancel = delayedTearDownCancel;
         this.paramsSetter = argsSetter;
+        this.sqlTypeToJavaTypeConverter = sqlTypeToJavaTypeConverter;
         this.sqlHistory = sqlHistory;
         this.ifLogSqlHistoryAnyway = logHistory;
     }
@@ -797,6 +800,7 @@ class JdbcTransactionWrapper implements JdbcTransaction {
 
     private Row wrapResultSetIntoRow(ResultSet rs) {
         return new Row() {
+            
             @Override
             public Object get(String columnLabel) throws TransactionHandledSQLException {
                 try {
@@ -811,12 +815,22 @@ class JdbcTransactionWrapper implements JdbcTransaction {
             }
 
             @Override
-            public <T> T get(String columnLabel, Class<T> t) throws TransactionHandledSQLException {
+            public <T> T get(String columnLabel, Class<T> type) 
+                    throws TransactionHandledSQLException {
                 try {
-                    return (T) rs.getObject(columnLabel);
+                    Object result = rs.getObject(columnLabel);
+                    Class resultType = result.getClass();
+                    if ( type.equals(resultType) || type.isAssignableFrom(resultType) ) {
+                        return (T) result;
+                    } else {
+                        return (T) JdbcTransactionWrapper
+                                .this
+                                .sqlTypeToJavaTypeConverter.convert(result, type);
+                    }
                 } catch (SQLException ex) {
                     logger.error(format(
-                            "Exception occured during Row processing with column: %s: ", columnLabel));
+                            "Exception occured during Row processing with column: %s: ", 
+                            columnLabel));
                     logger.error("", ex);
                     rollbackAndFinishAfterException();
                     throw new TransactionHandledSQLException(ex);

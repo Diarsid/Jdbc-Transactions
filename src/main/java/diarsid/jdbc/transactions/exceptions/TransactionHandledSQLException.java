@@ -13,7 +13,11 @@ import java.sql.SQLException;
  * 
  * @author Diarsid
  */
-public class TransactionHandledSQLException extends Exception{
+public class TransactionHandledSQLException extends Exception {
+    
+    public TransactionHandledSQLException(String message) {
+        super(message);
+    }
 
     /**
      * Wrap underlying SQLException that has occurred during an execution
